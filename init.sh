@@ -28,3 +28,7 @@ cd $CURRENT_DIR
 ln -s $SCRIPT_DIR/testssl/testssl.sh testssl
 
 #TODO:path通し自動化
+
+echo "パス関連がおかしければ、commandsコマンドを実行してください。"
+echo "commands"
+echo "./$CURRENT_DIR/scripts/commands.sh"

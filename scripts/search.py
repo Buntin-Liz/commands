@@ -7,7 +7,7 @@ import os
 import argparse
 
 parser = argparse.ArgumentParser(
-  description='Search for a string in all files and directories.')
+    description='Search for a string in all files and directories.')
 parser.add_argument('search_string', help='The string to search for.')
 args = parser.parse_args()
 
