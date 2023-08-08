@@ -1,0 +1,14 @@
+{
+  "name": "commands",
+  "version": "1.0.0",
+  "description": "My toolbox",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^5.1.6"
+  }
+}
