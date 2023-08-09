@@ -2,6 +2,7 @@
 
 import os
 import glob
+import subprocess
 
 # スクリプト拡張子(これがトリガー)
 EXTENSIONS = ["py", "sh", "bash", "mjs"]
@@ -23,5 +24,10 @@ def create_symlinks():
       print(f"created: {filename_without_extension}")
 
 
+def add_excute_permission():
+  process = (subprocess.Popen('cd src && chmod +x -R .', stdout=subprocess.PIPE, shell=True).communicate()[0].decode('utf-8'))
+
+
 if __name__ == "__main__":
   create_symlinks()
+  add_excute_permission()

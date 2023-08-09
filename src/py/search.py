@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 # スクリプトの名前は search.py とします。
-# chmod +x search.py というコマンドを使用してスクリプトを実行可能にします。
 
 import os
 import argparse
