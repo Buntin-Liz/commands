@@ -11,7 +11,6 @@ EXCLUDE_FILES = ["py/Client.py"]
 
 
 def create_symlinks():
-  os.makedirs('./bin', exist_ok=True)
   for extension in EXTENSIONS:
     for filepath in glob.iglob(f"./src/**/*.{extension}", recursive=True):
       relative_path = os.path.relpath(filepath, './src')

@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# スクリプトの名前は search.py とします。
-
 import os
 import argparse
 
