@@ -2,3 +2,4 @@
 .meta
 node_modules
 cron.txt
+*.mjs
