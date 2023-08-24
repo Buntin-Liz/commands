@@ -14,7 +14,6 @@ const searchFiles = async (dir: string, word: string) => {
   for (const file of files) {
     if (exclude.includes(file)) continue;
     const filePath = join(dir, file);
-    echo(filePath);
     const stats = await stat(filePath);
     if (stats.isDirectory()) {
       //directory
@@ -29,7 +28,7 @@ const searchFiles = async (dir: string, word: string) => {
       const lines = content.split('\n');
       lines.forEach((line, index) => {
         if (line.includes(word)) {
-          console.log(`${ filePath }:${ index + 1 }`);
+          console.log(`${filePath}:${index + 1}`);
         }
       });
     }
@@ -45,7 +44,7 @@ const searchFiles = async (dir: string, word: string) => {
     process.exit(0);
   }
 
-  echo`検索ワード: ${ word }`;
+  echo`検索ワード: ${word}`;
   if (!word) {
     console.error('検索ワードを引数につけてください[ex: yurusearch {検索ワード}]');
     process.exit(1);

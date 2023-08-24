@@ -11,7 +11,6 @@ const searchFiles = async (dir, word) => {
         if (exclude.includes(file))
             continue;
         const filePath = join(dir, file);
-        echo(filePath);
         const stats = await stat(filePath);
         if (stats.isDirectory()) {
             //directory
