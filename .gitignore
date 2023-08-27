@@ -3,3 +3,4 @@
 node_modules
 cron.txt
 *.mjs
+*.js
