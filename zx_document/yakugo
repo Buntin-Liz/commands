@@ -1,0 +1,534 @@
+
+**原文**: 
+Bash is great, but when it comes to writing more complex scripts,
+many people prefer a more convenient programming language.
+JavaScript is a perfect choice, but the Node.js standard library
+requires additional hassle before using. The `zx` package provides
+useful wrappers around `child_process`, escapes arguments and
+gives sensible defaults.
+
+**訳文**:
+Bashは素晴らしいですが、より複雑なスクリプトを書く際には、
+多くの人々がより便利なプログラミング言語を好むことがあります。
+JavaScriptは完璧な選択ですが、Node.jsの標準ライブラリを
+使用する前に追加の手間が必要です。`zx`パッケージは、`child_process`の周りに
+便利なラッパーを提供し、引数をエスケープし、適切なデフォルトを提供します。
+
+---
+
+**原文**:
+Write your scripts in a file with an `.mjs` extension in order to
+use `await` at the top level. If you prefer the `.js` extension,
+wrap your scripts in something like `void async function () {...}()`.
+
+**訳文**:
+トップレベルで`await`を使用するためには、スクリプトを`.mjs`拡張子のファイルに書き込んでください。
+もし`.js`拡張子を好む場合は、スクリプトを`void async function () {...}()`のようにラップしてください。
+
+---
+
+**原文**:
+Add the following shebang to the beginning of your `zx` scripts:
+
+**訳文**:
+`zx`スクリプトの先頭に以下のシェバングを追加してください：
+
+---
+
+**原文**:
+Now you will be able to run your script like so:
+
+**訳文**:
+これで、以下のようにスクリプトを実行できるようになります：
+
+---
+
+**原文**:
+Or via the `zx` executable:
+
+**訳文**:
+または、`zx`実行可能ファイルを使用して：
+
+---
+
+**原文**:
+All functions (`$`, `cd`, `fetch`, etc) are available straight away
+without any imports.
+
+**訳文**:
+すべての関数（`$`、`cd`、`fetch`など）は、インポートなしで
+すぐに利用可能です。
+
+---
+
+**原文**:
+Or import globals explicitly (for better autocomplete in VS Code).
+
+**訳文**:
+または、グローバル変数を明示的にインポートすることもできます（VS Codeでのオートコンプリートを向上させるため）。
+
+---
+
+**原文**:
+Executes a given command using the `spawn` func
+and returns [`ProcessPromise`](#processpromise).
+Everything passed through `${...}` will be automatically escaped and quoted.
+
+**訳文**:
+`spawn`関数を使用して指定されたコマンドを実行し、
+[`ProcessPromise`](#processpromise)を返します。
+`${...}`を通して渡されたすべてのものは、自動的にエスケープおよびクオートされます。
+
+
+---
+
+**原文**: 
+**There is no need to add extra quotes.** Read more about it in [quotes](docs/quotes.md).
+
+**訳文**: 
+**追加の引用符を追加する必要はありません。** 詳しくは[quotes](docs/quotes.md)を参照してください。
+
+---
+
+**原文**: 
+You can pass an array of arguments if needed:
+
+**訳文**: 
+必要に応じて引数の配列を渡すことができます：
+
+---
+
+**原文**: 
+If the executed program returns a non-zero exit code, [`ProcessOutput`](#processoutput) will be thrown.
+
+**訳文**: 
+実行されたプログラムがゼロ以外の終了コードを返す場合、[`ProcessOutput`](#processoutput)がスローされます。
+
+---
+
+**原文**: 
+Read more about the [ProcessPromise](docs/process-promise.md).
+
+**訳文**: 
+[ProcessPromise](docs/process-promise.md)についての詳細はこちらを参照してください。
+
+---
+
+**原文**: 
+The output of the process is captured as-is. Usually, programs print a new line `\n` at the end. If `ProcessOutput` is used as an argument to some other `$` process, **zx** will use stdout and trim the new line.
+
+**訳文**: 
+プロセスの出力はそのままキャプチャされます。通常、プログラムは最後に新しい行`\n`を出力します。`ProcessOutput`が他の`$`プロセスの引数として使用される場合、**zx**はstdoutを使用し、新しい行をトリムします。
+
+---
+
+**原文**: 
+Changes the current working directory.
+
+**訳文**: 
+現在の作業ディレクトリを変更します。
+
+---
+
+**原文**: 
+Like `echo`, in addition to `string` arguments, `cd` accepts and trims trailing newlines from `ProcessOutput` enabling common idioms like:
+
+**訳文**: 
+`echo`のように、`string`引数に加えて、`cd`は`ProcessOutput`からの末尾の改行を受け入れてトリムし、一般的な成句のようなものを可能にします：
+
+---
+
+**原文**: 
+A wrapper around the [node-fetch](https://www.npmjs.com/package/node-fetch) package.
+
+**訳文**: 
+[node-fetch](https://www.npmjs.com/package/node-fetch)パッケージのラッパーです。
+
+---
+
+**原文**: 
+A wrapper around the [readline](https://nodejs.org/api/readline.html) package.
+
+**訳文**: 
+[readline](https://nodejs.org/api/readline.html)パッケージのラッパーです。
+
+---
+
+**原文**: 
+A wrapper around the `setTimeout` function.
+
+**訳文**: 
+`setTimeout`関数のラッパーです。
+
+---
+
+**原文**: 
+A `console.log()` alternative which can take [ProcessOutput](#processoutput).
+
+**訳文**: 
+[ProcessOutput](#processoutput)を取ることができる`console.log()`の代替です。
+
+---
+
+**原文**: 
+Returns the stdin as a string.
+
+**訳文**: 
+stdinを文字列として返します。
+
+---
+
+**原文**: 
+Creates a new async context.
+
+**訳文**: 
+新しい非同期コンテキストを作成します。
+
+---
+
+**原文**: 
+Retries a callback for a few times. Will return after the first successful attempt, or will throw after specifies attempts count.
+
+**訳文**: 
+コールバックを数回リトライします。最初の成功した試行の後に返されるか、指定した試行回数の後にスローされます。
+
+---
+
+**原文**: 
+Starts a simple CLI spinner.
+
+**訳文**: 
+シンプルなCLIスピナーを開始します。
+
+---
+
+**原文**: 
+The following packages are available without importing inside scripts.
+
+**訳文**: 
+以下のパッケージは、スクリプト内でインポートせずに利用できます。
+
+---
+
+**原文**: 
+The [chalk](https://www.npmjs.com/package/chalk) package.
+
+**訳文**: 
+[chalk](https://www.npmjs.com/package/chalk)パッケージ。
+
+---
+
+**原文**: 
+The [fs-extra](https://www.npmjs.com/package/fs-extra) package.
+
+**訳文**: 
+[fs-extra](https://www.npmjs.com/package/fs-extra)パッケージ。
+
+---
+
+**原文**: 
+The [os](https://nodejs.org/api/os.html) package.
+
+**訳文**: 
+[os](https://nodejs.org/api/os.html)パッケージ。
+
+---
+
+**原文**: 
+The [path](https://nodejs.org/api/path.html) package.
+
+**訳文**: 
+[path](https://nodejs.org/api/path.html)パッケージ。
+
+---
+
+**原文**: 
+The [globby](https://github.com/sindresorhus/globby) package.
+
+**訳文**: 
+[globby](https://github.com/sindresorhus/globby)パッケージ。
+
+---
+
+**原文**: 
+The [yaml](https://www.npmjs.com/package/yaml) package.
+
+**訳文**: 
+[yaml](https://www.npmjs.com/package/yaml)パッケージ。
+
+---
+
+**原文**: 
+The [minimist](https://www.npmjs.com/package/minimist) package.
+
+**訳文**: 
+[minimist](https://www.npmjs.com/package/minimist)パッケージ。
+
+---
+
+**原文**: 
+A minimist-parsed version of the process args as `argv` (parsed without any config).
+
+**訳文**: 
+`argv`としてのプロセス引数のminimist解析バージョン（設定なしで解析）。
+
+
+---
+
+**原文**: 
+The [which](https://github.com/npm/node-which) package.
+
+**訳文**: 
+[which](https://github.com/npm/node-which)パッケージ。
+
+---
+
+**原文**: 
+Specifies what shell is used. Default is `which bash`.
+
+**訳文**: 
+使用されるシェルを指定します。デフォルトは`which bash`です。
+
+---
+
+**原文**: 
+Or use a CLI argument: `--shell=/bin/bash`
+
+**訳文**: 
+または、CLI引数を使用してください: `--shell=/bin/bash`
+
+---
+
+**原文**: 
+Specifies a `spawn` api. Defaults to `require('child_process').spawn`.
+
+**訳文**: 
+`spawn` APIを指定します。デフォルトは`require('child_process').spawn`です。
+
+---
+
+**原文**: 
+Specifies the command that will be prefixed to all commands run. Default is `set -euo pipefail;`.
+
+**訳文**: 
+すべての実行されるコマンドの前に付けられるコマンドを指定します。デフォルトは`set -euo pipefail;`です。
+
+---
+
+**原文**: 
+Or use a CLI argument: `--prefix='set -e;'`
+
+**訳文**: 
+または、CLI引数を使用してください: `--prefix='set -e;'`
+
+---
+
+**原文**: 
+Specifies a function for escaping special characters during command substitution.
+
+**訳文**: 
+コマンド置換中に特殊文字をエスケープするための関数を指定します。
+
+---
+
+**原文**: 
+Specifies verbosity. Default is `true`.
+
+**訳文**: 
+詳細度を指定します。デフォルトは`true`です。
+
+---
+
+**原文**: 
+In verbose mode, `zx` prints all executed commands alongside with their outputs.
+
+**訳文**: 
+詳細モードでは、`zx`は実行されたすべてのコマンドとその出力を一緒に表示します。
+
+---
+
+**原文**: 
+Or use the CLI argument `--quiet` to set `$.verbose = false`.
+
+**訳文**: 
+または、CLI引数`--quiet`を使用して`$.verbose = false`に設定してください。
+
+---
+
+**原文**: 
+Specifies an environment variables map. Defaults to `process.env`.
+
+**訳文**: 
+環境変数のマップを指定します。デフォルトは`process.env`です。
+
+---
+
+**原文**: 
+Specifies a current working directory of all processes created with the `$`.
+
+**訳文**: 
+`$`で作成されたすべてのプロセスの現在の作業ディレクトリを指定します。
+
+---
+
+**原文**: 
+The [cd()](#cd) func changes only `process.cwd()` and if no `$.cwd` specified, all `$` processes use `process.cwd()` by default (same as `spawn` behavior).
+
+**訳文**: 
+[cd()](#cd)関数は`process.cwd()`のみを変更し、`$.cwd`が指定されていない場合、すべての`$`プロセスはデフォルトで`process.cwd()`を使用します（`spawn`の動作と同じ）。
+
+---
+
+**原文**: 
+Specifies a [logging function](src/core.ts).
+
+**訳文**: 
+[ログ関数](src/core.ts)を指定します。
+
+---
+
+**原文**: 
+In [ESM](https://nodejs.org/api/esm.html) modules, Node.js does not provide `__filename` and `__dirname` globals. As such globals are really handy in scripts, `zx` provides these for use in `.mjs` files (when using the `zx` executable).
+
+**訳文**: 
+[ESM](https://nodejs.org/api/esm.html)モジュールでは、Node.jsは`__filename`および`__dirname`のグローバル変数を提供しません。そのようなグローバル変数はスクリプトで非常に便利なので、`zx`はこれらを`.mjs`ファイルで使用するために提供しています（`zx`実行可能ファイルを使用する場合）。
+
+---
+
+**原文**: 
+In [ESM](https://nodejs.org/api/modules.html#modules_module_createrequire_filename) modules, the `require()` function is not defined. The `zx` provides `require()` function, so it can be used with imports in `.mjs` files (when using `zx` executable).
+
+**訳文**: 
+[ESM](https://nodejs.org/api/modules.html#modules_module_createrequire_filename)モジュールでは、`require()`関数は定義されていません。`zx`は`require()`関数を提供するため、`.mjs`ファイルのインポートで使用することができます（`zx`実行可能ファイルを使用する場合）。
+
+---
+
+**原文**: 
+When passing an array of values as an argument to `$`, items of the array will be escaped individually and concatenated via space.
+
+**訳文**: 
+値の配列を`$`の引数として渡す場合、配列の項目は個別にエスケープされ、スペースを介して連結されます。
+
+---
+
+**原文**: 
+Example:
+
+**訳文**: 
+例：
+
+---
+
+**原文**: 
+It is possible to make use of `$` and other functions via explicit imports:
+
+**訳文**: 
+明示的なインポートを介して`$`や他の関数を使用することができます：
+
+---
+
+**原文**: 
+If script does not have a file extension (like `.git/hooks/pre-commit`), zx assumes that it is an [ESM](https://nodejs.org/api/modules.html#modules_module_createrequire_filename) module.
+
+**訳文**: 
+スクリプトがファイル拡張子を持っていない場合（`.git/hooks/pre-commit`のような場合）、zxはそれが[ESM](https://nodejs.org/api/modules.html#modules_module_createrequire_filename)モジュールであると想定します。
+
+---
+
+**原文**: 
+The `zx` can execute [scripts written as markdown](docs/markdown
+
+.md):
+
+**訳文**: 
+`zx`は[マークダウンとして書かれたスクリプト](docs/markdown.md)を実行することができます：
+
+---
+
+**原文**: 
+Set [`"type": "module"`](https://nodejs.org/api/packages.html#packages_type) in **package.json** and [`"module": "ESNext"`](https://www.typescriptlang.org/tsconfig/#module) in **tsconfig.json**.
+
+**訳文**: 
+**package.json**で[`"type": "module"`](https://nodejs.org/api/packages.html#packages_type)を設定し、**tsconfig.json**で[`"module": "ESNext"`](https://www.typescriptlang.org/tsconfig/#module)を設定してください。
+
+---
+
+**原文**: 
+If the argument to the `zx` executable starts with `https://`, the file will be downloaded and executed.
+
+**訳文**: 
+`zx`実行可能ファイルへの引数が`https://`で始まる場合、ファイルがダウンロードされて実行されます。
+
+---
+
+**原文**: 
+The `zx` supports executing scripts from stdin.
+
+**訳文**: 
+`zx`はstdinからのスクリプトの実行をサポートしています。
+
+---
+
+**原文**: 
+Evaluate the following argument as a script.
+
+**訳文**: 
+次の引数をスクリプトとして評価します。
+
+---
+
+**原文**: 
+Add `--install` flag to the `zx` command to install missing dependencies automatically.
+
+**訳文**: 
+`zx`コマンドに`--install`フラグを追加すると、不足している依存関係が自動的にインストールされます。
+
+---
+
+**原文**: 
+You can also specify needed version by adding comment with `@` after the import.
+
+**訳文**: 
+インポートの後に`@`を含むコメントを追加することで、必要なバージョンを指定することもできます。
+
+---
+
+**原文**: 
+Executing commands on remote hosts.
+
+**訳文**: 
+リモートホストでのコマンドの実行。
+
+---
+
+**原文**: 
+The `zx` uses [webpod](https://github.com/webpod/webpod) to execute commands on remote hosts.
+
+**訳文**: 
+`zx`はリモートホストでのコマンドの実行に[webpod](https://github.com/webpod/webpod)を使用します。
+
+---
+
+**原文**: 
+By default `child_process` does not include aliases and bash functions. But you are still able to do it by hand. Just attach necessary directives to the `$.prefix`.
+
+**訳文**: 
+デフォルトでは`child_process`にはエイリアスやbash関数は含まれていません。しかし、手動でそれを行うことはまだ可能です。必要な指示を`$.prefix`に添付してください。
+
+---
+
+**原文**: 
+The default GitHub Action runner comes with `npx` installed.
+
+**訳文**: 
+デフォルトのGitHub Actionランナーには`npx`がインストールされています。
+
+---
+
+**原文**: 
+Impatient early adopters can try the experimental zx versions. But keep in mind: these builds are ⚠️️**beta** in every sense.
+
+**訳文**: 
+焦りのある先行採用者は、実験的なzxバージョンを試すことができます。ただし、これらのビルドはあらゆる意味で⚠️️**ベータ**であることを念頭に置いてください。
+
+---
