@@ -5,7 +5,7 @@ import glob
 import subprocess
 
 # スクリプト拡張子(これがトリガー)
-EXTENSIONS = ["py", "sh", "bash", "mjs"]
+EXTENSIONS = ["py", "sh", "bash", "mjs", "js"]
 # 除外ファイル(パスのプレフィックスを削除)
 EXCLUDE_FILES = ["py/Client.py"]
 
