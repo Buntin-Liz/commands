@@ -54,10 +54,7 @@ await (async () => {
       return;
     }
   }
-
-  const now = new Date().toISOString();
   const configEntry = `
-# Added by script on ${ now }
 Host ${ aliasName }
     HostName ${ host }
     User ${ user }
