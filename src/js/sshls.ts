@@ -10,6 +10,8 @@ type Host = {
     port: number;
     identityfile: string;
     password?: string;
+    keys: string[],
+    contents: string[]
 }
 
 const parseHost = (hostsection: string): Host => {
@@ -21,7 +23,9 @@ const parseHost = (hostsection: string): Host => {
         user: '',
         port: 22,
         identityfile: '',
-        password: undefined
+        password: undefined,
+        keys: [],
+        contents: [],
     };
     lines.map((line) => line.trim()).forEach((line) => {
         if (line.startsWith('Host ')) {
@@ -41,6 +45,13 @@ const parseHost = (hostsection: string): Host => {
         }
         if (line.startsWith('IdentityFile ')) {
             host.identityfile = line.replace('IdentityFile ', '').trim();
+        }
+        //parse options
+        if (line.startsWith('#')) {
+            const key_value_pair = line.replace('#', '');
+            const [key, value] = key_value_pair.split(' ');
+            host.keys.push(key);
+            host.contents.push(value);
         }
     });
     return host;
@@ -95,6 +106,10 @@ const calculateMaxLengths = (hosts: Host[]) => {
 
 
 (async () => {
+    const args = process.argv;
+    const showPort = args.includes('-p');
+    const showUser = args.includes('-u');
+    const showOps = args.includes('-o');
     try {
         const home = os.homedir();
         const data = await fs.readFile(`${home}/.ssh/config`, 'utf8');
@@ -103,11 +118,16 @@ const calculateMaxLengths = (hosts: Host[]) => {
         const lengths = calculateMaxLengths(hosts);
 
         hosts.forEach(host => {
+            let opdata = '';
+            if (host.keys.length !== 0) {
+                opdata = host.keys.map((key, index) => `${key}:${host.contents[index]}`).join('|')
+            }
             const aliasStr = JSON.stringify(host.alias).padEnd(lengths.maxAliasLength);
             const hostnameStr = host.hostname.padEnd(lengths.maxHostnameLength);
-            const portStr = host.port.toString().padEnd(lengths.maxPortLength);
-            const userStr = host.user.padEnd(lengths.maxUserLength);
-            echo(`${aliasStr} ${hostnameStr}:${portStr} ${userStr}`);
+            const portStr = showPort ? `:${host.port.toString().padEnd(lengths.maxPortLength)}` : '';
+            const userStr = showUser ? host.user.padEnd(lengths.maxUserLength) : '';
+            const opsStr = showOps ? opdata : '';
+            echo(`${aliasStr} ${hostnameStr}${portStr} ${userStr}${opsStr}`);
         });
     } catch (error) {
         console.error(`Error reading or parsing SSH config: ${(error as any).message}`);
