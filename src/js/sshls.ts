@@ -28,19 +28,19 @@ const parseHost = (hostsection: string): Host => {
             host.alias = line.replace('Host ', '').split(' ');
         }
         if (line.startsWith('HostName ')) {
-            host.hostname = line.replace('HostName ', '');
+            host.hostname = line.replace('HostName ', '').trim();
         }
         if (line.startsWith('Hostname ')) {
-            host.hostname = line.replace('Hostname ', '');
+            host.hostname = line.replace('Hostname ', '').trim();
         }
         if (line.startsWith('User ')) {
-            host.user = line.replace('User ', '');
+            host.user = line.replace('User ', '').trim();
         }
         if (line.startsWith('Port ')) {
             host.port = parseInt(line.replace('Port ', ''));
         }
         if (line.startsWith('IdentityFile ')) {
-            host.identityfile = line.replace('IdentityFile ', '');
+            host.identityfile = line.replace('IdentityFile ', '').trim();
         }
     });
     return host;
