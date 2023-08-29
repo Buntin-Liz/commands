@@ -122,7 +122,8 @@ const calculateMaxLengths = (hosts: Host[]) => {
             if (host.keys.length !== 0) {
                 opdata = host.keys.map((key, index) => `${key}:${host.contents[index]}`).join('|')
             }
-            const aliasStr = JSON.stringify(host.alias).padEnd(lengths.maxAliasLength);
+            const aliasSecondary = host.alias.length === 1 ? host.alias[0] : JSON.stringify(host.alias);
+            const aliasStr = aliasSecondary.padEnd(lengths.maxAliasLength);
             const hostnameStr = host.hostname.padEnd(lengths.maxHostnameLength);
             const portStr = showPort ? `:${host.port.toString().padEnd(lengths.maxPortLength)}` : '';
             const userStr = showUser ? host.user.padEnd(lengths.maxUserLength) : '';
