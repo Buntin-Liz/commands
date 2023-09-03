@@ -1,12 +1,13 @@
 #!/usr/bin/env zx
 
 import "zx/globals";
-import path from "path";
-
 $.verbose = false;
 
+const commandName = "mask-file";
+
 await (async () => {
-  const targets = argv._;
+  //filter the commandName from argv._
+  const targets = argv._.filter((t) => !t.includes("commands/" + commandName));
   const pwdp = await $`pwd`;
 
   const histories = await Promise.all(
