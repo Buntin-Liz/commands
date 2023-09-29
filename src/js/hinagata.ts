@@ -1,14 +1,18 @@
 #!/usr/bin/env zx
-import "zx/globals";
-$.verbose = false;
-
 //初期設定(TypeScript,ZXの制約による)
+import "zx/globals";
 const commandName = 'hinagata';
+$.verbose = false;
 argv._ = argv._.filter((t) => !t.includes("commands/" + commandName));
 
+await (async () => {
+  //do something
+})();
+
 /* 
-  hinagata -x 3 -y 4 -n5 -abc --beep=boop foo bar baz
-  argv = {
+$ hinagata -x 3 -y 4 -n5 -abc --beep=boop foo bar baz
+
+argv = {
 	_: ['foo', 'bar', 'baz'],
 	x: 3,
 	y: 4,
@@ -19,7 +23,3 @@ argv._ = argv._.filter((t) => !t.includes("commands/" + commandName));
 	beep: 'boop'
 }
 */
-await (async () => {
-  //do something
-})();
-
