@@ -28,7 +28,12 @@ const phpModules = [
   { name: "XMLReader", pkgName: "php-xmlreader" },
   { name: "XMLWriter", pkgName: "php-xmlwriter" },
   { name: "zip", pkgName: "php-pecl-zip" },
-  { name: "zlib", pkgName: "php-zlib" }
+  { name: "zlib", pkgName: "php-zlib" },
+  { name: "imagick", pkgName: "php-imagick" },
+  //{ name: "ffmpeg", pkgName: "ffmpeg" },//{ name: "avconv", pkgName: "avconv" }, //  
+  //{ name: "openoffice", pkgName: "openoffice" },//{ name: "libreoffice", pkgName: "libreoffice" }, //  
+  { name: "pcntl", pkgName: "php-pcntl" },
+  { name: "phar", pkgName: "php-phar" }
 ];
 
 (async () => {
