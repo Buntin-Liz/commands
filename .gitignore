@@ -1,4 +1,3 @@
-.vscode
 .meta
 node_modules
 cron.txt
@@ -6,3 +5,4 @@ cron.txt
 *.js
 disdrive
 zls
+
