@@ -1,5 +1,6 @@
 #!/bin/bash
-set -x
+
+
 TARGET_DIR="./bin"
 TEMPLATE_DIR="./archive/template"
 
@@ -10,15 +11,6 @@ if [ "$DIR_NAME" != "commands" ]; then
   exit 1
 fi
 
-
-if [ -d "$TEMPLATE_DIR" ]; then
-  echo "TEMPLATE_DIRを削除しています: $TEMPLATE_DIR"
-  rm -rf "${TEMPLATE_DIR:?}"/*
-else
-  echo "ディレクトリが存在しません: $TEMPLATE_DIR"
-fi
-
-
 if [ -d "$TARGET_DIR" ]; then
   echo "TARGET_DIRを削除しています: $TARGET_DIR"
   rm -rf "${TARGET_DIR:?}"/*
@@ -26,6 +18,12 @@ else
   echo "ディレクトリが存在しません: $TARGET_DIR"
 fi
 
-set +x
+# TEMPLATE_DIRの中身をTAEGET_DIRにコピー
+if [ -d "$TEMPLATE_DIR" ]; then
+  echo "TEMPLATE_DIRをコピーしています: $TEMPLATE_DIR"
+  cp -r "$TEMPLATE_DIR"/* "$TARGET_DIR"
+else
+  echo "ディレクトリが存在しません: $TEMPLATE_DIR"
+fi
 
 echo "削除が正常に完了しました"
