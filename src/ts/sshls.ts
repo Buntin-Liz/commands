@@ -1,8 +1,7 @@
 #!/usr/bin/env -S deno run -A
-import $ from "https://deno.land/x/dax/mod.ts";
-import parseArgs from 'https://deno.land/x/deno_minimist/mod.ts';
+//import $ from "https://deno.land/x/dax/mod.ts";
+import parseArgs from "https://deno.land/x/deno_minimist@v1.0.2/mod.ts";
 
-//
 const args = parseArgs(Deno.args);
 
 type Host = {
@@ -10,13 +9,48 @@ type Host = {
   hostname: string;
   user: string;
   port: number;
-  identityfile: string;
-  password?: string;
-  keys: string[],
-  contents: string[]
-}
+  identityFile: string;
+  keys: string[];
+  contents: string[];
+};
+
+const parseLine = (line: string, host: Host): void => {
+  const actions: { [key: string]: () => void } = {
+    'Host': () => host.alias = line.replace('Host ', '').split(' '),
+    'HostName': () => host.hostname = line.replace('HostName ', '').trim(),
+    'Hostname': () => host.hostname = line.replace('Hostname ', '').trim(),
+    'User': () => host.user = line.replace('User ', '').trim(),
+    'Port': () => host.port = parseInt(line.replace('Port ', ''), 10),
+    'IdentityFile': () => host.identityFile = line.replace('IdentityFile ', '').trim(),
+    '#': () => {
+      const [key, value] = line.replace('#', '').split(' ');
+      host.keys.push(key);
+      host.contents.push(value);
+    }
+  };
+
+  const command = line.split(' ')[0];
+  if (actions[command]) {
+    actions[command]();
+  }
+};
 
 const parseHost = (hostsection: string): Host => {
+  const lines = hostsection.split('\n').map(line => line.trim());
+  let host: Host = {
+    alias: [],
+    hostname: '',
+    user: '',
+    port: 22,
+    identityFile: '',
+    keys: [],
+    contents: [],
+  };
+  lines.forEach(line => parseLine(line, host));
+  return host;
+};
+
+/* const parseHost = (hostsection: string): Host => {
   const lines = hostsection.split('\n');
   //if line has "Host " then host is alias
   let host: Host = {
@@ -57,7 +91,7 @@ const parseHost = (hostsection: string): Host => {
     }
   });
   return host;
-}
+} */
 
 const splitByHosts = (data: string): string[] => {
   const lines = data.split('\n');
@@ -105,11 +139,11 @@ const calculateMaxLengths = (hosts: Host[]) => {
   };
 }
 
-const printHostInfo = (host: Host, args: string[], lengths: any) => {
-  const showAll = args.includes('-a');
-  const showPort = args.includes('-p') || showAll;
-  const showUser = args.includes('-u') || showAll;
-  const showOps = args.includes('-o') || showAll;
+const printHostInfo = (host: Host, args: any, lengths: any) => {
+  const showAll = args.a;
+  const showPort = args.p || showAll;
+  const showUser = args.u || showAll;
+  const showOps = args.o || showAll;
   let opdata = '';
   if (host.keys.length !== 0) {
     opdata = host.keys.map((key, index) => `${ key }:${ host.contents[index] }`).join('|')
@@ -120,7 +154,7 @@ const printHostInfo = (host: Host, args: string[], lengths: any) => {
   const portStr = showPort ? `:${ host.port.toString().padEnd(lengths.maxPortLength) }` : '';
   const userStr = showUser ? host.user.padEnd(lengths.maxUserLength) : '';
   const opsStr = showOps ? opdata : '';
-  echo(`${ aliasStr } ${ hostnameStr }${ portStr } ${ userStr }${ opsStr }`);
+  console.log(`${ aliasStr } ${ hostnameStr }${ portStr } ${ userStr }${ opsStr }`);
 }
 
 (async () => {

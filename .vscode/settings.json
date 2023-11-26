@@ -1,0 +1,9 @@
+{
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "python.formatting.provider": "none",
+  "deno.enable": true,
+  "deno.lint": true,
+  "deno.unstable": true
+}
