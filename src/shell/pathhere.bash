@@ -2,7 +2,7 @@
 
 current_dir=$(pwd)
 
-# if .bashrc,.zshrc exists 
+# if .bashrc,.zshrc exists
 bashrc_exists=false
 zshrc_exists=false
 [ -f "$HOME/.bashrc" ] && bashrc_exists=true
@@ -17,14 +17,14 @@ if [ "$bashrc_exists" = true ] && [ "$zshrc_exists" = true ]; then
   case "$choice" in
     2)
       config_file="$HOME/.zshrc"
-      ;;
+    ;;
     *)
       config_file="$HOME/.bashrc"
-      ;;
+    ;;
   esac
-elif [ "$bashrc_exists" = true ]; then
+  elif [ "$bashrc_exists" = true ]; then
   config_file="$HOME/.bashrc"
-elif [ "$zshrc_exists" = true ]; then
+  elif [ "$zshrc_exists" = true ]; then
   config_file="$HOME/.zshrc"
 else
   echo "エラー: .bashrcまたは.zshrcが見つかりませんでした。"

@@ -1,6 +1,5 @@
 #!/usr/bin/env -S deno run -A
 import $ from "https://deno.land/x/dax@0.35.0/mod.ts";
-import parseArgs from "https://deno.land/x/deno_minimist@v1.0.2/mod.ts";
 import { dirname, join } from "https://deno.land/std/path/mod.ts";
 
 const solveOneDir = async (targetDir: string, binDir: string) => {
@@ -21,6 +20,7 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
       const scriptNameWithoutExt = scriptName.split('.')[0];
       const binPath = join(binDir, scriptNameWithoutExt);
       const logname = scriptPath.split('/').slice(-3).join('/');
+      if (scriptNameWithoutExt === 'deploy' || scriptNameWithoutExt === 'hinagata') continue;
       const symlinkCreationResult = await $`ln -s ${ scriptPath } ${ binPath }`;
       if (symlinkCreationResult.code === 0) {
         result.created.push(logname);
@@ -30,6 +30,7 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
       }
     }
   }
+
   return result;
 };
 
@@ -50,7 +51,7 @@ checkScript(srcDir);
 
 const commandsDir = dirname(srcDir);
 const binDir = join(commandsDir, 'bin');
-const srcDirs = ["js", "py", "shell", "ts"].map((dir) => join(srcDir, dir));
+const srcDirs = ["py", "shell", "ts"].map((dir) => join(srcDir, dir));
 
 const results = srcDirs.map((srcDir) => solveOneDir(srcDir, binDir));
 const resultsResolved = await Promise.all(results);

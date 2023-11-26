@@ -31,11 +31,11 @@ echo "}" >> $config_file
 nginx_result=$(nginx -t 2>&1)
 
 if echo $nginx_result | grep -q "test is successful"; then
-    echo "Nginx設定のテストが成功しました。Nginxをリスタートします。"
-    systemctl restart nginx
+  echo "Nginx設定のテストが成功しました。Nginxをリスタートします。"
+  systemctl restart nginx
 else
-    echo "Nginx設定のテストが失敗しました。以下のエラーメッセージを確認してください:"
-    echo $nginx_result
-    exit 1
+  echo "Nginx設定のテストが失敗しました。以下のエラーメッセージを確認してください:"
+  echo $nginx_result
+  exit 1
 fi
 
