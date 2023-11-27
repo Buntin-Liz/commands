@@ -1,3 +1,4 @@
+// deno-lint-ignore-file no-explicit-any
 import parseArgs from "https://deno.land/x/deno_minimist@v1.0.2/mod.ts";
 
 const args = parseArgs(Deno.args);
@@ -35,7 +36,7 @@ const parseLine = (line: string, host: Host): void => {
 
 const parseHost = (hostsection: string): Host => {
   const lines = hostsection.split('\n').map(line => line.trim());
-  let host: Host = {
+  const host: Host = {
     alias: [],
     hostname: '',
     user: '',
