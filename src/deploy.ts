@@ -2,17 +2,28 @@
 import $ from "https://deno.land/x/dax@0.35.0/mod.ts";
 import { dirname, join } from "https://deno.land/std/path/mod.ts";
 
+type Result = {
+  message: string;
+  error: boolean;
+  created: string[];
+  notCreated: string[];
+};
+
+const genResult = (): Result => {
+  return {
+    message: '',
+    error: false,
+    created: [] as string[],
+    notCreated: [] as string[]
+  };
+};
+
 const solveOneDir = async (targetDir: string, binDir: string) => {
   // targetDir:stringは、リンク対象があるディレクトリ
   // binDir:stringは、リンクを作成するディレクトリ
   //
   const scripts = Deno.readDir(targetDir);
-  const result = {
-    message: '',
-    error: false,
-    created: [] as string[],//Array<string>(),
-    notCreated: [] as string[]//Array<string>(),
-  };
+  const result = genResult();
   for await (const script of scripts) {
     if (script.isFile) {
       const scriptName = script.name;
@@ -38,6 +49,42 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
     }
   }
 
+  return result;
+};
+
+const solveDenoDir = async (targetDir: string, binDir: string) => {
+  // targetDir:stringは、リンク対象があるディレクトリ
+  // binDir:stringは、リンクを作成するディレクトリ
+  //
+  const scripts = Deno.readDir(targetDir);
+  const result = genResult();
+
+  for await (const script of scripts) {
+    if (script.isFile) {
+      const scriptName = script.name;
+      if (scriptName.endsWith('.ts')) {
+        const scriptPath = join(targetDir, script.name);
+        const scriptNameWithoutExt = scriptName.split('.')[0];
+        const binPath = join(binDir, scriptNameWithoutExt);
+        const logname = scriptPath.split('/').slice(-3).join('/');
+        if (scriptNameWithoutExt === 'deploy' || scriptNameWithoutExt === 'hinagata') continue;
+        try {
+          const compileResult = await $`deno compile --output ${ binPath } ${ scriptPath }`;
+          if (compileResult.code === 0) {
+            result.created.push(logname);
+          } else {
+            result.notCreated.push(logname);
+            result.error = true;
+          }
+        } catch (e) {
+          const error = e as Error;
+          console.log(error.message);
+          result.notCreated.push(logname);
+          result.error = true;
+        }
+      }
+    }
+  }
   return result;
 };
 
@@ -74,9 +121,9 @@ const updateShellConfig = async (shell: string, binDir: string) => {
   try {
     const ifStatBin = await Deno.stat(binDir);
     if (!ifStatBin.isDirectory) throw new Error(`binDir(${ binDir }) is not a directory.`);
-    const keyword = `export PATH="${ binDir }:$PATH"\n`;
-    const configFile = shell === "zsh" ? `${ homeDir }/.zshrc` : `${ homeDir }/.bashrc`;
-    console.log(`以下の内容を ${ configFile } に追加します:\n${ keyword }\n`);
+    const keyword = `export PATH = "${ binDir }:$PATH"\n`;
+    const configFile = shell === "zsh" ? `${ homeDir } /.zshrc` : `${ homeDir }/.bashrc`;
+    console.log(`以下の内容を ${ configFile } に追加します: \n${ keyword } \n`);
     const confirm = await $.confirm('変更を適用してよろしいですか？');
     if (confirm) {
       await Deno.writeTextFile(configFile, keyword, { append: true });
@@ -86,11 +133,24 @@ const updateShellConfig = async (shell: string, binDir: string) => {
       console.log("変更はキャンセルされました。");
     }
   } catch (error) {
-    console.log(`エラーが発生しました: 指定されたパス (${ binDir }) にアクセスできません。`);
+    console.log(`エラーが発生しました: 指定されたパス(${ binDir }) にアクセスできません。`);
     console.error(error);
   }
 };
 
+const resultReducer = (results: Result[]) => {
+  return results.reduce((acc, cur) => {
+    acc.created = acc.created.concat(cur.created);
+    acc.notCreated = acc.notCreated.concat(cur.notCreated);
+    acc.error = acc.error || cur.error;
+    return acc;
+  }, {
+    message: '',
+    error: false,
+    created: [] as string[],
+    notCreated: [] as string[]
+  });
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////|MAIN|/////////////////////////////////////////////
@@ -102,21 +162,15 @@ const updateShellConfig = async (shell: string, binDir: string) => {
 
   const commandsDir = dirname(srcDir);
   const binDir = join(commandsDir, 'bin');
-  const srcDirs = ["py", "shell", "ts"].map((dir) => join(srcDir, dir));
-
+  const srcDirs = ["py", "shell"].map((dir) => join(srcDir, dir));
+  const denoDirs = ["ts"].map((dir) => join(srcDir, dir));
   const results = srcDirs.map((srcDir) => solveOneDir(srcDir, binDir));
+  const results_of_deno = denoDirs.map((srcDir) => solveDenoDir(srcDir, binDir));
   const resultsResolved = await Promise.all(results);
-  const result = resultsResolved.reduce((acc, cur) => {
-    acc.created = acc.created.concat(cur.created);
-    acc.notCreated = acc.notCreated.concat(cur.notCreated);
-    acc.error = acc.error || cur.error;
-    return acc;
-  }, {
-    message: '',
-    error: false,
-    created: [] as string[],
-    notCreated: [] as string[]
-  });
+  const results_of_deno_resolved = await Promise.all(results_of_deno);
+  const result_ = resultReducer(resultsResolved);
+  const result_of_deno = resultReducer(results_of_deno_resolved);
+  const result = resultReducer([result_, result_of_deno]);
   if (result.error) {
     result.message = 'エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n例)既にリンクが存在する  ->  prune_bin\n';
     result.message += result.notCreated.join('\n');
@@ -129,7 +183,7 @@ const updateShellConfig = async (shell: string, binDir: string) => {
   console.log('PATH設定に移ります');
 
   const isPathSetResult = isPathSet(binDir);
-  console.log(`binDir(${ binDir })はPATHに[[ ${ isPathSetResult ? '存在します' : '存在しません' } ]]`);
+  console.log(`binDir(${ binDir })はPATHに[[${ isPathSetResult ? '存在します' : '存在しません' }]]`);
   if (!isPathSetResult) {
     const shell = getShell();
     await updateShellConfig(shell, binDir);
