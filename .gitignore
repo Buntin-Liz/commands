@@ -6,4 +6,7 @@ cron.txt
 disdrive
 zls
 
+# Ignore everything in the archive/template directory without a .gitkeep file
+archive/template/*
+
 bin/*
