@@ -1,0 +1,1 @@
+gpg --list-keys --keyid-format LONG | grep pub | awk '{print $2}' | cut -d'/' -f2;

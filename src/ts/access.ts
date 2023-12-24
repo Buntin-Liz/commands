@@ -12,7 +12,7 @@ if (args._.length !== 3 || args.h || args.help) {
 const [hostname, localPort, remotePort] = args._.map(String);
 
 (async () => {
-  const sshProcess = $`ssh -L ${ localPort }:localhost:${ remotePort } ${ hostname }`;
+  const sshProcess = $`ssh -N -L ${ localPort }:localhost:${ remotePort } ${ hostname }`;
   console.log(`Port forwarding with SSH started on ${ localPort }:localhost:${ remotePort }. Press Ctrl+C to stop.`);
   await sshProcess;
 })();
