@@ -1,7 +1,8 @@
 // deno-lint-ignore-file no-explicit-any
-import $ from "https://deno.land/x/dax@0.35.0/mod.ts";
-import { dirname, join } from "https://deno.land/std/path/mod.ts";
-import chalk from "https://deno.land/x/chalk_deno@v4.1.1-deno/source/index.js"
+import $, { CommandResult } from 'https://deno.land/x/dax@0.35.0/mod.ts';
+import { dirname, join } from 'https://deno.land/std@0.209.0/path/mod.ts';
+import chalk from 'https://deno.land/x/chalk_deno@v4.1.1-deno/source/index.js';
+import { path } from 'https://deno.land/x/dax@0.35.0/src/deps.ts';
 
 const chalk_ = chalk as any;
 
@@ -16,7 +17,7 @@ const genResult = (): Result => ({
   message: '',
   error: false,
   created: [],
-  notCreated: []
+  notCreated: [],
 });
 
 const solveOneDir = async (targetDir: string, binDir: string) => {
@@ -29,7 +30,7 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
       const binPath = join(binDir, scriptNameWithoutExt);
       const logname = scriptPath.split('/').slice(-3).join('/');
       try {
-        const symlinkCreationResult = await $`ln -s ${ scriptPath } ${ binPath }`;
+        const symlinkCreationResult = await $`ln -s ${scriptPath} ${binPath}`;
         if (symlinkCreationResult.code === 0) {
           result.created.push(logname);
         } else {
@@ -46,9 +47,10 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
   return result;
 };
 
-const solveDenoDir = async (targetDir: string, binDir: string) => {
+const solveTSDir = async (targetDir: string, binDir: string) => {
   const scripts = Deno.readDir(targetDir);
   const result = genResult();
+  const ifDeno = targetDir.includes('deno');
   for await (const script of scripts) {
     if (script.isFile && script.name.endsWith('.ts') && !['deploy', 'hinagata'].includes(script.name.split('.')[0])) {
       const scriptPath = join(targetDir, script.name);
@@ -56,7 +58,10 @@ const solveDenoDir = async (targetDir: string, binDir: string) => {
       const binPath = join(binDir, scriptNameWithoutExt);
       const logname = scriptPath.split('/').slice(-3).join('/');
       try {
-        const compileResult = await $`deno compile --allow-all --output ${ binPath } ${ scriptPath }`;
+        let compileResult:CommandResult | undefined = undefined;
+        if(ifDeno){
+          compileResult = await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
+        } 
         if (compileResult.code === 0) {
           result.created.push(logname);
         } else {
@@ -82,42 +87,42 @@ const checkScript = (scriptDir: string) => {
 };
 
 const isPathSet = (binDir: string) => {
-  const path = Deno.env.get("PATH") ?? "";
-  return path.split(":").includes(binDir);
+  const path = Deno.env.get('PATH') ?? '';
+  return path.split(':').includes(binDir);
 };
 
 const getShell = () => {
-  const shell = Deno.env.get("SHELL") ?? "";
-  return shell.includes("zsh") ? "zsh" : shell.includes("bash") ? "bash" : "unknown";
+  const shell = Deno.env.get('SHELL') ?? '';
+  return shell.includes('zsh') ? 'zsh' : shell.includes('bash') ? 'bash' : 'unknown';
 };
 
 const logTheTable = (t: string[]) => {
   const result = t.reduce((acc, cur) => {
-    return acc += `- ${ cur } \n`
+    return (acc += `- ${cur} \n`);
   }, '');
   return result + '\n';
-}
+};
 
 const updateShellConfig = async (shell: string, binDir: string) => {
-  const homeDir = Deno.env.get("HOME");
+  const homeDir = Deno.env.get('HOME');
   if (!homeDir) {
-    console.log("エラーが発生しました: 環境変数 $HOME が設定されていません。");
+    console.log('エラーが発生しました: 環境変数 $HOME が設定されていません。');
     return;
   }
   try {
-    if (!(await Deno.stat(binDir)).isDirectory) throw new Error(`binDir(${ binDir }) is not a directory.`);
-    const keyword = `export PATH="${ binDir }:$PATH"\n`;
-    const configFile = shell === "zsh" ? `${ homeDir }/.zshrc` : `${ homeDir }/.bashrc`;
-    console.log(`以下の内容を ${ configFile } に追加します: \n${ keyword }\n`);
+    if (!(await Deno.stat(binDir)).isDirectory) throw new Error(`binDir(${binDir}) is not a directory.`);
+    const keyword = `export PATH="${binDir}:$PATH"\n`;
+    const configFile = shell === 'zsh' ? `${homeDir}/.zshrc` : `${homeDir}/.bashrc`;
+    console.log(`以下の内容を ${configFile} に追加します: \n${keyword}\n`);
     if (await $.confirm('変更を適用してよろしいですか？')) {
       await Deno.writeTextFile(configFile, keyword, { append: true });
       await Deno.writeTextFile(configFile, '\n', { append: true });
-      console.log(`${ configFile } が更新されました。`);
+      console.log(`${configFile} が更新されました。`);
     } else {
-      console.log("変更はキャンセルされました。");
+      console.log('変更はキャンセルされました。');
     }
   } catch (error) {
-    console.log(`エラーが発生しました: 指定されたパス(${ binDir }) にアクセスできません。`);
+    console.log(`エラーが発生しました: 指定されたパス(${binDir}) にアクセスできません。`);
     console.error(error);
   }
 };
@@ -126,7 +131,7 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
   ...acc,
   created: [...acc.created, ...cur.created],
   notCreated: [...acc.notCreated, ...cur.notCreated],
-  error: acc.error || cur.error
+  error: acc.error || cur.error,
 });
 
 (async () => {
@@ -136,17 +141,22 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
 
   const commandsDir = dirname(srcDir);
   const binDir = join(commandsDir, 'bin');
-  const srcDirs = ["py", "shell"].map(dir => join(srcDir, dir));
-  const denoDirs = ["ts"].map(dir => join(srcDir, dir));
+  const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
+  const tsDir = path.join(srcDir, 'ts');
+  const denoDir = path.join(tsDir, 'deno');
+  const bunDir = path.join(tsDir, 'bun');
+  const tsDirs = [denoDir, bunDir];
   //準備ここまで
   // リンク、コンパイルここから
   const result = [
-    ...await Promise.all(srcDirs.map(srcDir => solveOneDir(srcDir, binDir))),
-    ...await Promise.all(denoDirs.map(srcDir => solveDenoDir(srcDir, binDir)))
+    ...(await Promise.all(srcDirs.map((srcDir) => solveOneDir(srcDir, binDir)))),
+    ...(await Promise.all(tsDirs.map((srcDir) => solveTSDir(srcDir, binDir)))),
   ].reduce(resultReducer, genResult());
 
   if (result.error) {
-    console.log(chalk_.bgRed('エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n'));
+    console.log(
+      chalk_.bgRed('エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n')
+    );
     console.log(chalk_.yellow(logTheTable(result.notCreated)));
   }
   console.log(chalk_.bgGreen('以下のスクリプトについて、シンボリックリンクの作成に成功しました。\n'));
@@ -165,11 +175,11 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
   }
   //Permission
   console.log('\nスクリプトのパーミッション設定を行います。');
-  const chmodResult = await $`chmod -R 755 ${ binDir }`;
+  const chmodResult = await $`chmod -R 755 ${binDir}`;
   if (chmodResult.code === 0) {
-    console.log("パーミッションの変更に成功しました。");
+    console.log('パーミッションの変更に成功しました。');
   } else {
-    console.log("パーミッションの変更に失敗しました。");
+    console.log('パーミッションの変更に失敗しました。');
   }
   //Exit
   console.log('プログラムを終了します。');

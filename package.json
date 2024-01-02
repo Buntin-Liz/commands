@@ -1,0 +1,17 @@
+{
+  "name": "commands",
+  "module": "index.ts",
+  "type": "module",
+  "devDependencies": {
+    "bun-types": "latest"
+  },
+  "scripts": {
+    "hinagata": "bun run src/ts/bun/hinagata.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "zx": "^7.2.3"
+  }
+}
