@@ -38,7 +38,8 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
           result.error = true;
         }
       } catch (error) {
-        console.log(error.message);
+        const err = error as Error;
+        console.log(err.message);
         result.notCreated.push(logname);
         result.error = true;
       }
@@ -51,6 +52,7 @@ const solveTSDir = async (targetDir: string, binDir: string) => {
   const scripts = Deno.readDir(targetDir);
   const result = genResult();
   const ifDeno = targetDir.includes('deno');
+  const ifBun = targetDir.includes('bun');
   for await (const script of scripts) {
     if (script.isFile && script.name.endsWith('.ts') && !['deploy', 'hinagata'].includes(script.name.split('.')[0])) {
       const scriptPath = join(targetDir, script.name);
@@ -58,18 +60,21 @@ const solveTSDir = async (targetDir: string, binDir: string) => {
       const binPath = join(binDir, scriptNameWithoutExt);
       const logname = scriptPath.split('/').slice(-3).join('/');
       try {
-        let compileResult:CommandResult | undefined = undefined;
-        if(ifDeno){
+        let compileResult: CommandResult | undefined = undefined;
+        if (ifDeno) {
           compileResult = await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
-        } 
-        if (compileResult.code === 0) {
-          result.created.push(logname);
-        } else {
-          result.notCreated.push(logname);
-          result.error = true;
+          if (compileResult.code === 0) {
+            result.created.push(logname);
+          } else {
+            result.notCreated.push(logname);
+            result.error = true;
+          }
+        } else if (ifBun) {
+          console.log('this dir is ignored. Bun scripts linked as "not compiled".');
         }
       } catch (error) {
-        console.log(error.message);
+        const err = error as Error;
+        console.log(err.message);
         result.notCreated.push(logname);
         result.error = true;
       }
@@ -134,23 +139,34 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
   error: acc.error || cur.error,
 });
 
+const genFilenameFromPath = (path: string) => {
+  return path.split('/').slice(-1)[0];
+};
+
 (async () => {
   //準備ここから
   const srcDir = new URL('.', import.meta.url).pathname;
   checkScript(srcDir);
-
   const commandsDir = dirname(srcDir);
   const binDir = join(commandsDir, 'bin');
-  const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
   const tsDir = path.join(srcDir, 'ts');
   const denoDir = path.join(tsDir, 'deno');
   const bunDir = path.join(tsDir, 'bun');
-  const tsDirs = [denoDir, bunDir];
+  const srcTSDirs = [denoDir, bunDir];
+  const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
+  srcDirs.push(bunDir);
+  const initMessage = `リンク作成対象ディレクトリ${srcDirs
+    .map(genFilenameFromPath)
+    .join(',')} \nコンパイル対象ディレクトリ${srcTSDirs.map(genFilenameFromPath).join(',')}`;
+  const separator = '///////////////////////////////';
+  console.log(chalk_.red(separator));
+  console.log(chalk_.bgGreen(initMessage));
+  console.log(chalk_.red(separator));
   //準備ここまで
   // リンク、コンパイルここから
   const result = [
     ...(await Promise.all(srcDirs.map((srcDir) => solveOneDir(srcDir, binDir)))),
-    ...(await Promise.all(tsDirs.map((srcDir) => solveTSDir(srcDir, binDir)))),
+    ...(await Promise.all(srcTSDirs.map((srcDir) => solveTSDir(srcDir, binDir)))),
   ].reduce(resultReducer, genResult());
 
   if (result.error) {
@@ -175,11 +191,14 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
   }
   //Permission
   console.log('\nスクリプトのパーミッション設定を行います。');
-  const chmodResult = await $`chmod -R 755 ${binDir}`;
-  if (chmodResult.code === 0) {
+  const chmodResultBinDir = await $`chmod -R 755 ${binDir}`;
+  const chmodResultSrcDir = await $`chmod -R 755 ${srcDir}`;
+  if (chmodResultBinDir.code === 0 && chmodResultSrcDir.code === 0) {
     console.log('パーミッションの変更に成功しました。');
   } else {
     console.log('パーミッションの変更に失敗しました。');
+    if(chmodResultBinDir.code !== 0) console.log(`binDir: ${binDir}`);
+    if(chmodResultSrcDir.code !== 0) console.log(`srcDir: ${srcDir}`);
   }
   //Exit
   console.log('プログラムを終了します。');
