@@ -11,6 +11,7 @@ type Result = {
   error: boolean;
   created: string[];
   notCreated: string[];
+  skipped: string[];
 };
 
 const genResult = (): Result => ({
@@ -18,6 +19,7 @@ const genResult = (): Result => ({
   error: false,
   created: [],
   notCreated: [],
+  skipped: [],
 });
 
 const solveOneDir = async (targetDir: string, binDir: string) => {
@@ -25,6 +27,10 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
   const result = genResult();
   for await (const script of scripts) {
     if (script.isFile && !['deploy', 'hinagata'].includes(script.name.split('.')[0])) {
+      if (script.name.startsWith('_')) {
+        result.skipped.push(script.name);
+        continue;
+      }
       const scriptPath = join(targetDir, script.name);
       const scriptNameWithoutExt = script.name.split('.')[0];
       const binPath = join(binDir, scriptNameWithoutExt);
@@ -55,6 +61,10 @@ const solveTSDir = async (targetDir: string, binDir: string) => {
   const ifBun = targetDir.includes('bun');
   for await (const script of scripts) {
     if (script.isFile && script.name.endsWith('.ts') && !['deploy', 'hinagata'].includes(script.name.split('.')[0])) {
+      if (script.name.startsWith('_')) {
+        result.skipped.push(script.name);
+        continue;
+      }
       const scriptPath = join(targetDir, script.name);
       const scriptNameWithoutExt = script.name.split('.')[0];
       const binPath = join(binDir, scriptNameWithoutExt);
@@ -136,6 +146,7 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
   ...acc,
   created: [...acc.created, ...cur.created],
   notCreated: [...acc.notCreated, ...cur.notCreated],
+  skipped: [...acc.skipped, ...cur.skipped],
   error: acc.error || cur.error,
 });
 
@@ -152,27 +163,28 @@ const genFilenameFromPath = (path: string) => {
   const tsDir = path.join(srcDir, 'ts');
   const denoDir = path.join(tsDir, 'deno');
   const bunDir = path.join(tsDir, 'bun');
-  const srcTSDirs = [denoDir, bunDir];
+  const srcTSDirs = [denoDir];
   const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
   srcDirs.push(bunDir);
-  const initMessage = `リンク作成対象ディレクトリ${srcDirs
-    .map(genFilenameFromPath)
-    .join(',')} \nコンパイル対象ディレクトリ${srcTSDirs.map(genFilenameFromPath).join(',')}`;
+  const initMessage = `リンク作成対象ディレクトリ${srcDirs.map(genFilenameFromPath).join(',')} \nコンパイル対象ディレクトリ${srcTSDirs.map(genFilenameFromPath).join(',')}`;
   const separator = '///////////////////////////////';
   console.log(chalk_.red(separator));
   console.log(chalk_.bgGreen(initMessage));
   console.log(chalk_.red(separator));
   //準備ここまで
   // リンク、コンパイルここから
-  const result = [
-    ...(await Promise.all(srcDirs.map((srcDir) => solveOneDir(srcDir, binDir)))),
-    ...(await Promise.all(srcTSDirs.map((srcDir) => solveTSDir(srcDir, binDir)))),
-  ].reduce(resultReducer, genResult());
+  const result = [...(await Promise.all(srcDirs.map((srcDir) => solveOneDir(srcDir, binDir)))), ...(await Promise.all(srcTSDirs.map((srcDir) => solveTSDir(srcDir, binDir))))].reduce(
+    resultReducer,
+    genResult()
+  );
+
+  if (result.skipped.length > 0) {
+    console.log(chalk_.bgYellow('以下のスクリプトはリンク作成をスキップしました。\n'));
+    console.log(chalk_.yellow(logTheTable(result.skipped)));
+  }
 
   if (result.error) {
-    console.log(
-      chalk_.bgRed('エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n')
-    );
+    console.log(chalk_.bgRed('エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n'));
     console.log(chalk_.yellow(logTheTable(result.notCreated)));
   }
   console.log(chalk_.bgGreen('以下のスクリプトについて、シンボリックリンクの作成に成功しました。\n'));
@@ -197,8 +209,8 @@ const genFilenameFromPath = (path: string) => {
     console.log('パーミッションの変更に成功しました。');
   } else {
     console.log('パーミッションの変更に失敗しました。');
-    if(chmodResultBinDir.code !== 0) console.log(`binDir: ${binDir}`);
-    if(chmodResultSrcDir.code !== 0) console.log(`srcDir: ${srcDir}`);
+    if (chmodResultBinDir.code !== 0) console.log(`binDir: ${binDir}`);
+    if (chmodResultSrcDir.code !== 0) console.log(`srcDir: ${srcDir}`);
   }
   //Exit
   console.log('プログラムを終了します。');
