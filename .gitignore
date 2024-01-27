@@ -10,3 +10,4 @@ zls
 archive/template/*
 
 bin/*
+.DS_Store
