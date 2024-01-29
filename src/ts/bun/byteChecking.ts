@@ -1,51 +1,98 @@
+#!/usr/bin/env bun
 import { file, fileURLToPath } from 'bun';
 import { parseArgs } from 'util';
 
-//async function getFileSize(filePath: string): Promise<void>
-
-type ArgsResult = {
-  values: string[];
-};
-
-function getPathsFromArgs(): string[] {
-  // parseArgsを使用して引数を解析
-  const args = parseArgs({
+const getPathsFromArgs = (): string[] => {
+  const args: {
+    values: {};
+    positionals: string[];
+  } = parseArgs({
     args: Bun.argv,
     options: {},
     strict: true,
     allowPositionals: true,
   });
-
-  // valuesプロパティを取得し、最初の二つの要素を除外
-  return (args as unknown as ArgsResult).values.slice(2);
-}
-
-// 使用例
-const paths = getPathsFromArgs();
-console.log(paths); // 最初の二つの要素を除外したPathの配列を表示
-
-const getFileSize = async (filePath: string): Promise<void> => {
-  // fileURLToPathを使用してファイルパスを変換
-  const path = fileURLToPath(new URL(filePath, import.meta.url));
-
-  // ファイルの情報を取得
-  //const stats = await Bun.file(path).stat();
-  const file = Bun.file(path);
-
-  // ファイルサイズをKB単位で取得
-  const sizeInKB = file.size / 1024;
-
-  // KBをMB単位に変換し、両方を表示
-  const sizeInMB = sizeInKB / 1024;
-  console.log(`${sizeInMB.toFixed(2)}MB (${sizeInKB.toFixed(0)}KB)`);
+  return args.positionals.slice(2);
 };
 
-// 例: 特定のファイルのサイズを取得
-//getFileSize('file://path/to/your/file.txt');
+const formatAndPrintTable = (table: string[][]): void => {
+  // 各列の最大幅を計算
+  const columnWidths = table[0].map((_, columnIndex) =>
+    Math.max(...table.map((row) => row[columnIndex].length))
+  );
+
+  // 表を整形して出力
+  table.forEach((row) => {
+    const formattedRow = row
+      .map((cell, index) => {
+        // 最初の列は左寄せ、それ以外は中央寄せ
+        if (index === 0) {
+          return cell.padEnd(columnWidths[index], ' ');
+        } else {
+          const totalPadding = columnWidths[index] - cell.length;
+          const paddingLeft = Math.floor(totalPadding / 2);
+          const paddingRight = totalPadding - paddingLeft;
+          return ' '.repeat(paddingLeft) + cell + ' '.repeat(paddingRight);
+        }
+      })
+      .join(' | ');
+
+    console.log(formattedRow);
+  });
+};
+
+const getFileStatus = async (
+  filename: string
+): Promise<{ volumes: [string, string]; exists: boolean }> => {
+  const file = Bun.file(filename);
+  if (!(await file.exists())) {
+    return {
+      volumes: ['N/A', 'N/A'],
+      exists: false,
+    };
+  }
+  const bytes = file.size;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const binaryUnits = ['B', 'KiB', 'MiB', 'GiB', 'TiB'];
+  const factor = 1000;
+  const binaryFactor = 1024;
+
+  let index = 0;
+  let binaryIndex = 0;
+
+  while (index < units.length - 1 && bytes >= factor ** (index + 1)) {
+    index++;
+  }
+
+  while (
+    binaryIndex < binaryUnits.length - 1 &&
+    bytes >= binaryFactor ** (binaryIndex + 1)
+  ) {
+    binaryIndex++;
+  }
+
+  const decimalValue =
+    (bytes / factor ** index).toFixed(1) + ' ' + units[index];
+  const binaryValue =
+    (bytes / binaryFactor ** binaryIndex).toFixed(1) +
+    ' ' +
+    binaryUnits[binaryIndex];
+
+  return {
+    volumes: [decimalValue, binaryValue],
+    exists: true,
+  };
+};
 
 (async () => {
   const filePaths = getPathsFromArgs();
-  console.log(filePaths);
+  const table = [['File', 'Size', 'Size (binary)']];
+  for (let file of filePaths) {
+    const { exists, volumes } = await getFileStatus(file);
+    table.push([file, exists ? '✅' : '❎', ...volumes]);
+  }
 
-  //getFileSize(args._[0]);
+  formatAndPrintTable(table);
+
+  //getFileStatus(args._[0]);
 })();

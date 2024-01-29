@@ -3,12 +3,12 @@
     "editor.defaultFormatter": "ms-python.autopep8"
   },
   "python.formatting.provider": "none",
-  "deno.enable": true,
-  "deno.lint": true,
-  "deno.unstable": true,
-  // "deno.enable": false,
-  // "deno.lint": false,
-  // "deno.unstable": false,
+  // "deno.enable": true,
+  // "deno.lint": true,
+  // "deno.unstable": true,
+  "deno.enable": false,
+  "deno.lint": false,
+  "deno.unstable": false,
   "cSpell.words": ["hinagata", "logname"],
   "cmake.configureOnOpen": true
 }
