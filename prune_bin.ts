@@ -1,10 +1,10 @@
 #!/usr/bin/env -S deno run -A
-import $ from "https://deno.land/x/dax@0.35.0/mod.ts";
-import { copy } from "https://deno.land/std@0.208.0/fs/mod.ts";
+import $ from 'https://deno.land/x/dax@0.35.0/mod.ts';
+import { copy } from 'https://deno.land/std@0.208.0/fs/mod.ts';
 
 const checkCurrentDirectory = async (expectedDir: string) => {
   const pwd = await $`pwd`.text();
-  const currentDir = await $`basename ${ pwd }`.text();
+  const currentDir = await $`basename ${pwd}`.text();
   if (currentDir.trim() !== expectedDir) {
     console.log(`commandsディレクトリで実行してください`);
     Deno.exit(1);
@@ -14,37 +14,37 @@ const checkCurrentDirectory = async (expectedDir: string) => {
 const copyDir = async (src: string, dest: string) => {
   try {
     await copy(src, dest, { overwrite: true });
-    console.log(`ディレクトリがコピーされました: ${ src } -> ${ dest }`);
+    console.log(`ディレクトリがコピーされました: ${src} -> ${dest}`);
   } catch (error) {
-    console.error(`ディレクトリのコピー中にエラーが発生しました: ${ error }`);
+    console.error(`ディレクトリのコピー中にエラーが発生しました: ${error}`);
   }
 };
 const removeTargetDirIfExists = async (targetDir: string) => {
-  if (await $`test -d ${ targetDir }`) {
-    console.log(`TARGET_DIRを削除しています: ${ targetDir }`);
-    await $`rm -rf ${ targetDir }`;
+  if (await $`test -d ${targetDir}`) {
+    console.log(`TARGET_DIRを削除しています: ${targetDir}`);
+    await $`rm -rf ${targetDir}`;
   } else {
-    console.log(`ディレクトリが存在しません: ${ targetDir }`);
+    console.log(`ディレクトリが存在しません: ${targetDir}`);
   }
 };
 
 const copyTemplateDirToTarget = async (templateDir: string, targetDir: string) => {
-  console.log("TEMPLATE_DIRをコピーします。");
-  if ((await $`test -d ${ templateDir }`).code === 0) {
+  console.log('TEMPLATE_DIRをコピーします。');
+  if ((await $`test -d ${templateDir}`).code === 0) {
     await copyDir(templateDir, targetDir);
   } else {
-    console.log(`ディレクトリが存在しません: ${ templateDir }`);
+    console.log(`ディレクトリが存在しません: ${templateDir}`);
   }
 };
 
 (async () => {
-  const targetDir = "./bin";
-  const templateDir = "./archive/template";
+  const targetDir = './bin';
+  const templateDir = './archive/template';
 
-  await checkCurrentDirectory("commands");
+  await checkCurrentDirectory('commands');
   await removeTargetDirIfExists(targetDir);
   await copyTemplateDirToTarget(templateDir, targetDir);
-  console.log("削除が正常に完了しました");
+  console.log('削除が正常に完了しました');
 })();
 
 /* 
