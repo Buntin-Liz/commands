@@ -9,6 +9,12 @@
   "deno.enable": false,
   "deno.lint": false,
   "deno.unstable": false,
-  "cSpell.words": ["hinagata", "logname"],
+  "cSpell.words": [
+    "deno",
+    "Ents",
+    "hinagata",
+    "lockb",
+    "logname"
+  ],
   "cmake.configureOnOpen": true
 }

@@ -1,1 +1,2 @@
-bun ./deploy.bun.sh
+# bun src/index.bun.sh
+zsh ./src/index.bun.sh

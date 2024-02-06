@@ -16,12 +16,10 @@ const getPathsFromArgs = (): string[] => {
 };
 
 const formatAndPrintTable = (table: string[][]): void => {
-  // 各列の最大幅を計算
   const columnWidths = table[0].map((_, columnIndex) =>
     Math.max(...table.map((row) => row[columnIndex].length))
   );
 
-  // 表を整形して出力
   table.forEach((row) => {
     const formattedRow = row
       .map((cell, index) => {
@@ -36,7 +34,6 @@ const formatAndPrintTable = (table: string[][]): void => {
         }
       })
       .join(' | ');
-
     console.log(formattedRow);
   });
 };
@@ -93,6 +90,4 @@ const getFileStatus = async (
   }
 
   formatAndPrintTable(table);
-
-  //getFileStatus(args._[0]);
 })();

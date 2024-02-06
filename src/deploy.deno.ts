@@ -26,7 +26,10 @@ const solveOneDir = async (targetDir: string, binDir: string) => {
   const scripts = Deno.readDir(targetDir);
   const result = genResult();
   for await (const script of scripts) {
-    if (script.isFile && !['deploy', 'hinagata'].includes(script.name.split('.')[0])) {
+    if (
+      script.isFile &&
+      !['deploy', 'hinagata'].includes(script.name.split('.')[0])
+    ) {
       if (script.name.startsWith('_')) {
         result.skipped.push(script.name);
         continue;
@@ -60,7 +63,11 @@ const solveTSDir = async (targetDir: string, binDir: string) => {
   const ifDeno = targetDir.includes('deno');
   const ifBun = targetDir.includes('bun');
   for await (const script of scripts) {
-    if (script.isFile && script.name.endsWith('.ts') && !['deploy', 'hinagata'].includes(script.name.split('.')[0])) {
+    if (
+      script.isFile &&
+      script.name.endsWith('.ts') &&
+      !['deploy', 'hinagata'].includes(script.name.split('.')[0])
+    ) {
       if (script.name.startsWith('_')) {
         result.skipped.push(script.name);
         continue;
@@ -72,7 +79,8 @@ const solveTSDir = async (targetDir: string, binDir: string) => {
       try {
         let compileResult: CommandResult | undefined = undefined;
         if (ifDeno) {
-          compileResult = await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
+          compileResult =
+            await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
           if (compileResult.code === 0) {
             result.created.push(logname);
           } else {
@@ -80,7 +88,9 @@ const solveTSDir = async (targetDir: string, binDir: string) => {
             result.error = true;
           }
         } else if (ifBun) {
-          console.log('this dir is ignored. Bun scripts linked as "not compiled".');
+          console.log(
+            'this dir is ignored. Bun scripts linked as "not compiled".'
+          );
         }
       } catch (error) {
         const err = error as Error;
@@ -108,7 +118,11 @@ const isPathSet = (binDir: string) => {
 
 const getShell = () => {
   const shell = Deno.env.get('SHELL') ?? '';
-  return shell.includes('zsh') ? 'zsh' : shell.includes('bash') ? 'bash' : 'unknown';
+  return shell.includes('zsh')
+    ? 'zsh'
+    : shell.includes('bash')
+    ? 'bash'
+    : 'unknown';
 };
 
 const logTheTable = (t: string[]) => {
@@ -125,9 +139,11 @@ const updateShellConfig = async (shell: string, binDir: string) => {
     return;
   }
   try {
-    if (!(await Deno.stat(binDir)).isDirectory) throw new Error(`binDir(${binDir}) is not a directory.`);
+    if (!(await Deno.stat(binDir)).isDirectory)
+      throw new Error(`binDir(${binDir}) is not a directory.`);
     const keyword = `export PATH="${binDir}:$PATH"\n`;
-    const configFile = shell === 'zsh' ? `${homeDir}/.zshrc` : `${homeDir}/.bashrc`;
+    const configFile =
+      shell === 'zsh' ? `${homeDir}/.zshrc` : `${homeDir}/.bashrc`;
     console.log(`以下の内容を ${configFile} に追加します: \n${keyword}\n`);
     if (await $.confirm('変更を適用してよろしいですか？')) {
       await Deno.writeTextFile(configFile, keyword, { append: true });
@@ -137,7 +153,9 @@ const updateShellConfig = async (shell: string, binDir: string) => {
       console.log('変更はキャンセルされました。');
     }
   } catch (error) {
-    console.log(`エラーが発生しました: 指定されたパス(${binDir}) にアクセスできません。`);
+    console.log(
+      `エラーが発生しました: 指定されたパス(${binDir}) にアクセスできません。`
+    );
     console.error(error);
   }
 };
@@ -166,28 +184,46 @@ const genFilenameFromPath = (path: string) => {
   const srcTSDirs = [denoDir];
   const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
   srcDirs.push(bunDir);
-  const initMessage = `リンク作成対象ディレクトリ${srcDirs.map(genFilenameFromPath).join(',')} \nコンパイル対象ディレクトリ${srcTSDirs.map(genFilenameFromPath).join(',')}`;
+  const initMessage = `リンク作成対象ディレクトリ${srcDirs
+    .map(genFilenameFromPath)
+    .join(',')} \nコンパイル対象ディレクトリ${srcTSDirs
+    .map(genFilenameFromPath)
+    .join(',')}`;
   const separator = '///////////////////////////////';
   console.log(chalk_.red(separator));
   console.log(chalk_.bgGreen(initMessage));
   console.log(chalk_.red(separator));
   //準備ここまで
   // リンク、コンパイルここから
-  const result = [...(await Promise.all(srcDirs.map((srcDir) => solveOneDir(srcDir, binDir)))), ...(await Promise.all(srcTSDirs.map((srcDir) => solveTSDir(srcDir, binDir))))].reduce(
-    resultReducer,
-    genResult()
-  );
+  const result = [
+    ...(await Promise.all(
+      srcDirs.map((srcDir) => solveOneDir(srcDir, binDir))
+    )),
+    ...(await Promise.all(
+      srcTSDirs.map((srcDir) => solveTSDir(srcDir, binDir))
+    )),
+  ].reduce(resultReducer, genResult());
 
   if (result.skipped.length > 0) {
-    console.log(chalk_.bgYellow('以下のスクリプトはリンク作成をスキップしました。\n'));
+    console.log(
+      chalk_.bgYellow('以下のスクリプトはリンク作成をスキップしました。\n')
+    );
     console.log(chalk_.yellow(logTheTable(result.skipped)));
   }
 
   if (result.error) {
-    console.log(chalk_.bgRed('エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n'));
+    console.log(
+      chalk_.bgRed(
+        'エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n'
+      )
+    );
     console.log(chalk_.yellow(logTheTable(result.notCreated)));
   }
-  console.log(chalk_.bgGreen('以下のスクリプトについて、シンボリックリンクの作成に成功しました。\n'));
+  console.log(
+    chalk_.bgGreen(
+      '以下のスクリプトについて、シンボリックリンクの作成に成功しました。\n'
+    )
+  );
   if (result.created.length === 0) {
     console.log('なし\n');
   } else {

@@ -7,8 +7,10 @@
     "bun-types": "latest"
   },
   "scripts": {
-    "deploy" : "./deploy",
-    "hinagata": "./src/ts/bun/hinagata.ts"
+    "install": "bun ./src/index.bun.sh",
+    "deploy": "./deploy",
+    "hinagata": "./src/ts/bun/hinagata.ts",
+    "purge": "rm -rf ./node_modules bun.lockb package-lock.json"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
