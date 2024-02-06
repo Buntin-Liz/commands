@@ -7,8 +7,8 @@
     "bun-types": "latest"
   },
   "scripts": {
-    "install": "bun ./src/index.bun.sh",
     "deploy": "./deploy",
+    "deploy-deno": "rm -rf bin && cp -r ./template ./bin && deno run -A src/deploy.deno.ts",
     "hinagata": "./src/ts/bun/hinagata.ts",
     "purge": "rm -rf ./node_modules bun.lockb package-lock.json"
   },

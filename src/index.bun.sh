@@ -2,7 +2,9 @@
 # https://github.com/Buntin-Liz/commands
 # commands
 # Newer version deployment script
-# This script target is completely transparent about sshls.ts of Deno version
+# This script target is completely transparent about sshls.ts of Deno version\
+# Caution: This script is not executable from Bun (Now)
+#          Execute this from zsh or bash
 ###
 # Check current directory is root of git repository
 if [ "$(git rev-parse --show-toplevel 2> /dev/null)" = "$(pwd)" ]; then

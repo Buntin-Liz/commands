@@ -1,2 +1,2 @@
 # bun src/index.bun.sh
-zsh ./src/index.bun.sh
+bash ./src/index.bun.sh

@@ -1,0 +1,39 @@
+#!/bin/bash
+
+echo "[commands] Bun install script";
+
+# 引数に -f が含まれるかチェック
+FORCE_INSTALL=false
+for arg in "$@"; do
+  if [ "$arg" = "-f" ]; then
+    FORCE_INSTALL=true
+    break
+  fi
+done
+
+# bun が既にインストールされているかどうかをチェック
+if command -v bun >/dev/null && [ "$FORCE_INSTALL" = false ]; then
+  echo "Bun is already installed. Use '-f' to force reinstall."
+else
+  # Bun のインストールまたは再インストール
+  rm -rf ~/.bun
+  curl -fsSL https://bun.sh/install | bash;
+
+  # $SHELL 環境変数を参照して、使用しているシェルの種類を判断
+  if [[ "$SHELL" == */zsh ]]; then
+    SHELL_CONFIG="~/.zshrc"
+    echo "Detected zsh shell."
+  elif [[ "$SHELL" == */bash ]]; then
+    SHELL_CONFIG="~/.bashrc"
+    echo "Detected bash shell."
+  else
+    # 未知のシェルの場合の処理
+    SHELL_CONFIG=""
+    echo "Unknown shell detected. Please manually source your shell configuration file."
+  fi
+
+  # シェル設定ファイルが特定できた場合、sourceするように指示
+  if [ -n "$SHELL_CONFIG" ]; then
+    echo "Please run 'source $SHELL_CONFIG' to update your shell environment."
+  fi
+fi

@@ -1,0 +1,5 @@
+#!/bin/bash
+echo "[commands] Bun reinstall script";
+# Shellからの実行のため、Mac, Linuxであることを前提としている。
+rm -rf ~/.bun
+curl -fsSL https://bun.sh/install | bash;
