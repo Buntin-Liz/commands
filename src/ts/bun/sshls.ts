@@ -1,13 +1,29 @@
 #!/usr/bin/env bun
-import { $ } from 'bun';
 import os from 'os';
 import { parseArgs } from 'util';
 
 const HOME_DIR = os.homedir();
 
-const args = parseArgs({
+const parsed = parseArgs({
   args: Bun.argv,
-  options: {},
+  options: {
+    all: {
+      type: 'boolean',
+      short: 'a',
+    },
+    port: {
+      type: 'boolean',
+      short: 'p',
+    },
+    user: {
+      type: 'boolean',
+      short: 'u',
+    },
+    option: {
+      type: 'boolean',
+      short: 'o',
+    },
+  },
   strict: true,
   allowPositionals: true,
 });
@@ -59,49 +75,6 @@ const parseHost = (hostSection: string): Host => {
   return host;
 };
 
-/* const parseHost = (hostSection: string): Host => {
-  const lines = hostSection.split('\n');
-  //if line has "Host " then host is alias
-  let host: Host = {
-    alias: [],
-    hostname: '',
-    user: '',
-    port: 22,
-    identityfile: '',
-    password: undefined,
-    keys: [],
-    contents: [],
-  };
-  lines.map((line) => line.trim()).forEach((line) => {
-    if (line.startsWith('Host ')) {
-      host.alias = line.replace('Host ', '').split(' ');
-    }
-    if (line.startsWith('HostName ')) {
-      host.hostname = line.replace('HostName ', '').trim();
-    }
-    if (line.startsWith('Hostname ')) {
-      host.hostname = line.replace('Hostname ', '').trim();
-    }
-    if (line.startsWith('User ')) {
-      host.user = line.replace('User ', '').trim();
-    }
-    if (line.startsWith('Port ')) {
-      host.port = parseInt(line.replace('Port ', ''));
-    }
-    if (line.startsWith('IdentityFile ')) {
-      host.identityfile = line.replace('IdentityFile ', '').trim();
-    }
-    //parse options
-    if (line.startsWith('#')) {
-      const key_value_pair = line.replace('#', '');
-      const [key, value] = key_value_pair.split(' ');
-      host.keys.push(key);
-      host.contents.push(value);
-    }
-  });
-  return host;
-} */
-
 const splitByHosts = (data: string): string[] => {
   const lines = data.split('\n');
   const hostSections: string[] = [];
@@ -148,11 +121,11 @@ const calculateMaxLengths = (hosts: Host[]) => {
   };
 };
 
-const printHostInfo = (host: Host, args: any, lengths: any) => {
-  const showAll = args.a;
-  const showPort = args.p || showAll;
-  const showUser = args.u || showAll;
-  const showOps = args.o || showAll;
+const printHostInfo = (host: Host, lengths: any) => {
+  const showAll = !!parsed.values.all;
+  const showPort = !!parsed.values.port || showAll;
+  const showUser = !!parsed.values.user || showAll;
+  const showOps = !!parsed.values.all || showAll;
   let optionInfoData = '';
   if (host.keys.length !== 0) {
     optionInfoData = host.keys
@@ -177,7 +150,7 @@ const printHostInfo = (host: Host, args: any, lengths: any) => {
       throw new Error('ホームディレクトリが見つかりません');
     }
     const data = Bun.file(`${HOME_DIR}/.ssh/config`);
-    if ((await data.exists()) === false) {
+    if (!(await data.exists())) {
       throw new Error('SSH設定ファイルが見つかりません');
     }
     const content = await data.text();
@@ -185,11 +158,13 @@ const printHostInfo = (host: Host, args: any, lengths: any) => {
     const hosts = hostSections.map(parseHost);
     const lengths = calculateMaxLengths(hosts);
     for (const host of hosts) {
-      printHostInfo(host, args, lengths);
+      printHostInfo(host, lengths);
     }
   } catch (error) {
-    console.error(
-      `Error reading or parsing SSH config: ${(error as any).message}`
-    );
+    if (error instanceof Error) {
+      console.error(error.message);
+    } else {
+      console.log('エラーが発生しました。');
+    }
   }
 })();

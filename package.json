@@ -16,6 +16,7 @@
     "typescript": "^5.0.0"
   },
   "dependencies": {
+    "eslint": "^8.56.0",
     "zx": "^7.2.3"
   }
 }
