@@ -3,6 +3,7 @@ import { $ } from 'bun';
 import { Dirent, promises as fs, constants as fsConstants } from 'fs';
 import { join, basename, dirname, parse, relative } from 'node:path';
 import chalk from 'chalk';
+import os from 'os';
 
 type Result = {
   message: string;
