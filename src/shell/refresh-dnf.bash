@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Refresh DNF
-dnf check-update
-dnf update -y
-dnf upgrade -y
-dnf autoremove -y
-dnf clean all
-dnf makecache
+sudo dnf check-update
+sudo dnf update -y
+sudo dnf upgrade -y
+sudo dnf autoremove -y
+sudo dnf clean all
+sudo dnf makecache
+
