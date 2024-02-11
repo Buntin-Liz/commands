@@ -17,18 +17,11 @@ PATH の設定もできます。(prompt で y を選択した場合)
 
 ![](https://raw.buntin.xyz/tools/data/RESULT.png)
 
-commands の中に含めたいが、deploy で失われたくない、という場合、`archive/template`ディレクトリが使えます。
+commands の中に含めたいが、deploy で失われたくない、という場合、`commands/template`ディレクトリが使えます。
 この中のスクリプトは、deploy で bin の雛形となるため、スクリプトの変更の影響を受けず、一度追加するだけで済みます。
 
-どこに置いても動きますが、おすすめは`/opt/local`ディレクトリかホームです。
+どこに置いても動きますが、おすすめはホームディレクトリ(`~/commands`)か、`/opt/local/commands`ディレクトリです。
 
 # PATH -> commands/bin
 
-## 注意:deno,python,bash,bun を最低限インストールしてあること。
-
-#### suggested equipment(厳守)
-
-- Python(python3) >= 3.10.12
-- Deno(deno) >= 1.38.3
-- Bash(bash) >= 5.1.16
-- Bun(bun) >= 1.0.26
+## 注意:bun,deno,python(python3),bash を最低限インストールしてあること。
