@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/usr/bin/env zsh
 echo "Refreshing Homebrew"
 echo "Updating Homebrew"
 brew update
