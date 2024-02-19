@@ -1,5 +1,3 @@
-#!/bin/bash
-
 if [ -n "$BASH_VERSION" ]; then
   echo "Running in Bash"
   SHELL_CONFIG_FILE=~/.bashrc
@@ -13,5 +11,5 @@ fi
 
 echo "Reloading shell config file: $SHELL_CONFIG_FILE"
 source $SHELL_CONFIG_FILE
-#ls ~/*.rs
+
 
