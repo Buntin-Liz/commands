@@ -8,7 +8,7 @@ const args = parseArgs({
   allowPositionals: true,
 });
 const generatePassword = (length: number): string => {
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+{}|:<>?';
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^*()_+{}:?';
   let password = '';
   const criteria = [false, false, false, false]; // 小文字、大文字、数字、特殊文字
 
