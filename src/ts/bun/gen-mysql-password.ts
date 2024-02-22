@@ -25,16 +25,30 @@ const generatePassword = (length: number): string => {
 
 (async () => {
   // 引数に基づいて何かする（例）
-  const inputPassLen = args.positionals.slice(2)[0];
+  const sliced = args.positionals.slice(2);
+  const inputPassLen = sliced[0];
+  let count: string | number = sliced[1];
+  if (!count) {
+    count = 1;
+  } else {
+    const parsed = parseInt(count);
+    if (isNaN(parsed)) {
+      throw new Error('count is not parsable to number');
+    } else {
+      count = parsed;
+    }
+  }
   if (!inputPassLen) {
     console.error('set password length (gen-mysql-password 10)');
     return;
   }
-  const passLen = Number(inputPassLen);
-  if (Number.isNaN(passLen)) {
-    console.error('length is not number');
-    return;
+  for (let i = 0; i < count; i++) {
+    const passLen = Number(inputPassLen);
+    if (Number.isNaN(passLen)) {
+      console.error('length is not number');
+      return;
+    }
+    const pass = generatePassword(passLen);
+    console.log(pass);
   }
-  const pass = generatePassword(passLen);
-  console.log(pass);
 })();

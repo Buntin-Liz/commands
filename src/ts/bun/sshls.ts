@@ -23,6 +23,10 @@ const parsed = parseArgs({
       type: 'boolean',
       short: 'o',
     },
+    short: {
+      type: 'boolean',
+      short: 's',
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -38,6 +42,28 @@ type Host = {
   contents: string[];
 };
 
+type Ops = {
+  all: boolean;
+  port: boolean;
+  user: boolean;
+  option: boolean;
+  short: boolean;
+};
+
+const parseOptions = (): Ops => {
+  const options = {
+    all: !!parsed.values.all,
+    port: !!parsed.values.port,
+    user: !!parsed.values.user,
+    option: !!parsed.values.option,
+    short: !!parsed.values.short,
+  };
+  options.port = options.port || options.all;
+  options.user = options.user || options.all;
+  options.option = options.option || options.all;
+  return options;
+};
+
 const parseLine = (host: Host, line: string): void => {
   const actions: { [key: string]: () => void } = {
     Host: () => (host.alias = line.replace('Host ', '').split(' ')),
@@ -45,8 +71,7 @@ const parseLine = (host: Host, line: string): void => {
     Hostname: () => (host.hostname = line.replace('Hostname ', '').trim()),
     User: () => (host.user = line.replace('User ', '').trim()),
     Port: () => (host.port = parseInt(line.replace('Port ', ''), 10)),
-    IdentityFile: () =>
-      (host.identityFile = line.replace('IdentityFile ', '').trim()),
+    IdentityFile: () => (host.identityFile = line.replace('IdentityFile ', '').trim()),
     '#': () => {
       const [key, value] = line.replace('#', '').split(' ');
       host.keys.push(key);
@@ -113,39 +138,30 @@ const calculateMaxLengths = (hosts: Host[]) => {
       maxUserLength = host.user.length;
     }
   });
-  return {
-    maxAliasLength,
-    maxHostnameLength,
-    maxPortLength,
-    maxUserLength,
-  };
+  return [maxAliasLength, maxHostnameLength, maxPortLength, maxUserLength];
 };
 
-const printHostInfo = (host: Host, lengths: any) => {
-  const showAll = !!parsed.values.all;
-  const showPort = !!parsed.values.port || showAll;
-  const showUser = !!parsed.values.user || showAll;
-  const showOps = !!parsed.values.all || showAll;
+const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
   let optionInfoData = '';
   if (host.keys.length !== 0) {
-    optionInfoData = host.keys
-      .map((key, index) => `${key}:${host.contents[index]}`)
-      .join('|');
+    optionInfoData = host.keys.map((key, index) => `${key}:${host.contents[index]}`).join('|');
   }
-  const aliasSecondary =
-    host.alias.length === 1 ? host.alias[0] : JSON.stringify(host.alias);
-  const aliasStr = aliasSecondary.padEnd(lengths.maxAliasLength);
-  const hostnameStr = host.hostname.padEnd(lengths.maxHostnameLength);
-  const portStr = showPort
-    ? `:${host.port.toString().padEnd(lengths.maxPortLength)}`
-    : '';
-  const userStr = showUser ? host.user.padEnd(lengths.maxUserLength) : '';
-  const opsStr = showOps ? optionInfoData : '';
-  console.log(`${aliasStr} ${hostnameStr}${portStr} ${userStr}${opsStr}`);
+  const aliasSecondary = host.alias.length === 1 ? host.alias[0] : JSON.stringify(host.alias);
+  const aliasStr = aliasSecondary.padEnd(lengths[0]);
+  const hostnameStr = host.hostname.padEnd(lengths[1]);
+  const portStr = options.port ? `:${host.port.toString().padEnd(lengths[2])}` : '';
+  const userStr = options.user ? host.user.padEnd(lengths[3]) : '';
+  const opsStr = options.option ? optionInfoData : '';
+  if (options.short) {
+    console.log(`${aliasStr}`);
+  } else {
+    console.log(`${aliasStr} ${hostnameStr}${portStr} ${userStr}${opsStr}`);
+  }
 };
 
 (async () => {
   try {
+    const options = parseOptions();
     if (!HOME_DIR) {
       throw new Error('ホームディレクトリが見つかりません');
     }
@@ -158,7 +174,7 @@ const printHostInfo = (host: Host, lengths: any) => {
     const hosts = hostSections.map(parseHost);
     const lengths = calculateMaxLengths(hosts);
     for (const host of hosts) {
-      printHostInfo(host, lengths);
+      printHostInfo(host, lengths, options);
     }
   } catch (error) {
     if (error instanceof Error) {
