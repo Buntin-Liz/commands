@@ -20,7 +20,7 @@ cp -r ./template ./bin
 
 # [ADVANCED] deployment automation scripts fields(Bun,Node,Deno,Python,Bash,etc...)
 # Hooks
-# bun run ./bin/_auto.bun.ts
+bun run ./bin/_auto.bun.ts
 
 bun run src/deploy.bun.ts
 
