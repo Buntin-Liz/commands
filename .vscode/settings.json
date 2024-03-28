@@ -9,6 +9,6 @@
   "deno.enable": false,
   "deno.lint": false,
   "deno.unstable": false,
-  "cSpell.words": ["deno", "Ents", "hinagata", "identityfile", "lockb", "logname", "Positionals"],
+  "cSpell.words": ["buntinjp", "buntinliz", "configname", "deno", "Ents", "hinagata", "identityfile", "lockb", "logname", "Positionals"],
   "cmake.configureOnOpen": true
 }
