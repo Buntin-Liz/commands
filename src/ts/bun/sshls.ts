@@ -105,11 +105,9 @@ const splitByHosts = (data: string): string[] => {
   const hostSections: string[] = [];
   let currentSection = '';
   for (const line of lines) {
-    if (line.startsWith('Host ')) {
-      if (currentSection.trim() !== '') {
-        hostSections.push(currentSection.trim());
-        currentSection = '';
-      }
+    if (line.startsWith('Host ') && currentSection.trim() !== '') {
+      hostSections.push(currentSection.trim());
+      currentSection = '';
     }
     currentSection += line + '\n';
   }
@@ -155,7 +153,7 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
   if (options.short) {
     console.log(`${aliasStr}`);
   } else {
-    console.log(`${aliasStr} ${hostnameStr}${portStr} ${userStr}${opsStr}`);
+    console.log(`${aliasStr} ${hostnameStr} ${portStr} ${userStr}${opsStr}`);
   }
 };
 
@@ -172,6 +170,7 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
     const content = await data.text();
     const hostSections = splitByHosts(content);
     const hosts = hostSections.map(parseHost);
+    console.log(JSON.stringify(hosts, null, 2));
     const lengths = calculateMaxLengths(hosts);
     for (const host of hosts) {
       printHostInfo(host, lengths, options);
