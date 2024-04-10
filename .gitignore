@@ -12,3 +12,5 @@ templte/*
 
 bin/*
 .DS_Store
+
+info.json

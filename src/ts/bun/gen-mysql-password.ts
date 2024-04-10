@@ -3,14 +3,20 @@ import { $ } from 'bun';
 import { parseArgs } from 'util';
 const args = parseArgs({
   args: Bun.argv,
-  options: {},
+  options: {
+    silent: {
+      type: 'boolean',
+      short: 's',
+    },
+  },
   strict: true,
   allowPositionals: true,
 });
+
 const generatePassword = (length: number): string => {
-  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^*()_+{}:?';
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789___';
   let password = '';
-  const criteria = [false, false, false, false]; // 小文字、大文字、数字、特殊文字
+  const criteria = [false, false, false, false];
 
   while (!criteria.every(Boolean) || password.length < length) {
     const char = charset.charAt(Math.floor(Math.random() * charset.length));
@@ -24,9 +30,8 @@ const generatePassword = (length: number): string => {
 };
 
 (async () => {
-  // 引数に基づいて何かする（例）
   const sliced = args.positionals.slice(2);
-  const inputPassLen = sliced[0];
+  let inputPassLen = sliced[0];
   let count: string | number = sliced[1];
   if (!count) {
     count = 1;
@@ -39,8 +44,7 @@ const generatePassword = (length: number): string => {
     }
   }
   if (!inputPassLen) {
-    console.error('set password length (gen-mysql-password 10)');
-    return;
+    inputPassLen = '16';
   }
   for (let i = 0; i < count; i++) {
     const passLen = Number(inputPassLen);

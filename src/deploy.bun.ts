@@ -6,7 +6,7 @@ import { join, basename, dirname, parse, relative } from 'node:path';
 import chalk from 'chalk';
 import os from 'os';
 
-const infoPath = join('src', 'info.json');
+const infoPath = join('info.json');
 
 type Result = {
   message: string;
@@ -282,6 +282,27 @@ const getInfo = async () => {
   return JSON.parse(info) as Info;
 };
 
+const checkInfo = async () => {
+  try {
+    const info = Bun.file(infoPath);
+    if (await info.exists()) {
+      return 0;
+    } else {
+      console.log(chalk.bgRed('commands設定ファイルが見つかりませんでした。生成します。\n'));
+      const res = await setInfo();
+      if (res === 0) {
+        console.log('info.jsonの生成に成功しました。');
+        return 0;
+      } else {
+        console.log('info.jsonの生成に失敗しました。');
+        return -1;
+      }
+    }
+  } catch {
+    return -1;
+  }
+};
+
 const checkEnvVars = async () => {
   const info = await getInfo();
   const COMMANDS_INSTALL = Bun.env.COMMANDS_INSTALL;
@@ -321,8 +342,11 @@ const checkEnvVars = async () => {
     denoDir: denoDir,
     bunDir: bunDir,
   };
-  console.log('[debug] dirsObj:', JSON.stringify(dirsObj, null, 2));
+  if (process.env.DEBUG === '1') {
+    console.log('[debug] dirsObj:', JSON.stringify(dirsObj, null, 2));
+  }
   //準備ここから
+  await checkInfo();
   const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
   srcDirs.push(bunDir);
   const srcTSDirs = [denoDir];
