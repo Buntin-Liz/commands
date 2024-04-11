@@ -170,7 +170,6 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
     const content = await data.text();
     const hostSections = splitByHosts(content);
     const hosts = hostSections.map(parseHost);
-    console.log(JSON.stringify(hosts, null, 2));
     const lengths = calculateMaxLengths(hosts);
     for (const host of hosts) {
       printHostInfo(host, lengths, options);
