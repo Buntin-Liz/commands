@@ -16,42 +16,31 @@ const args = parseArgs({
 const generatePassword = (length: number): string => {
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789___';
   let password = '';
-  const criteria = [false, false, false, false];
-
-  while (!criteria.every(Boolean) || password.length < length) {
-    const char = charset.charAt(Math.floor(Math.random() * charset.length));
-    password += char;
-    if (!criteria[0] && /[a-z]/.test(char)) criteria[0] = true;
-    if (!criteria[1] && /[A-Z]/.test(char)) criteria[1] = true;
-    if (!criteria[2] && /[0-9]/.test(char)) criteria[2] = true;
-    if (!criteria[3] && /[^a-zA-Z0-9]/.test(char)) criteria[3] = true;
+  while (true) {
+    password = '';
+    for (let i = 0; i < length; i++) {
+      const char = charset.charAt(Math.floor(Math.random() * charset.length));
+      password += char;
+    }
+    const criteria = [/[a-z]/.test(password), /[A-Z]/.test(password), /[0-9]/.test(password), /[_]/.test(password)];
+    if (criteria.every((c) => c)) {
+      break;
+    }
   }
   return password;
 };
 
 (async () => {
-  const sliced = args.positionals.slice(2);
-  let inputPassLen = sliced[0];
-  let count: string | number = sliced[1];
-  if (!count) {
-    count = 1;
-  } else {
-    const parsed = parseInt(count);
-    if (isNaN(parsed)) {
-      throw new Error('count is not parsable to number');
-    } else {
-      count = parsed;
-    }
-  }
-  if (!inputPassLen) {
-    inputPassLen = '16';
+  let inputPassLen = args.positionals[2];
+  const count = parseInt(args.positionals[3] || '1');
+
+  const passLen = parseInt(inputPassLen || '20');
+
+  if (Number.isNaN(passLen) || passLen < 1) {
+    console.error('length is not a valid number');
+    return;
   }
   for (let i = 0; i < count; i++) {
-    const passLen = Number(inputPassLen);
-    if (Number.isNaN(passLen)) {
-      console.error('length is not number');
-      return;
-    }
     const pass = generatePassword(passLen);
     console.log(pass);
   }
