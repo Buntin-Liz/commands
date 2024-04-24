@@ -34,7 +34,7 @@ const generatePassword = (length: number): string => {
   let inputPassLen = args.positionals[2];
   const count = parseInt(args.positionals[3] || '1');
 
-  const passLen = parseInt(inputPassLen || '20');
+  const passLen = parseInt(inputPassLen || '17');
 
   if (Number.isNaN(passLen) || passLen < 1) {
     console.error('length is not a valid number');
