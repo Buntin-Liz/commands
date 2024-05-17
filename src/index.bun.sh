@@ -2,7 +2,6 @@
 # https://github.com/Buntin-Liz/commands
 # commands
 # Newer version deployment script
-# This script target is completely transparent about sshls.ts of Deno version\
 # Caution: This script is not executable from Bun (Now)
 #          Execute this from zsh or bash
 ###
@@ -23,4 +22,4 @@ cp -r ./template ./bin
 bun run ./bin/_auto.bun.ts
 
 bun run src/deploy.bun.ts
-
+# bun run src/deploy.python.ts

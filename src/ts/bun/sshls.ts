@@ -4,7 +4,7 @@ import { parseArgs } from 'util';
 
 const HOME_DIR = os.homedir();
 
-const parsed = parseArgs({
+const { values, positionals } = parseArgs({
   args: Bun.argv,
   options: {
     all: {
@@ -27,6 +27,10 @@ const parsed = parseArgs({
       type: 'boolean',
       short: 's',
     },
+    help: {
+      type: 'boolean',
+      short: 'h',
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -48,15 +52,17 @@ type Ops = {
   user: boolean;
   option: boolean;
   short: boolean;
+  help: boolean;
 };
 
 const parseOptions = (): Ops => {
   const options = {
-    all: !!parsed.values.all,
-    port: !!parsed.values.port,
-    user: !!parsed.values.user,
-    option: !!parsed.values.option,
-    short: !!parsed.values.short,
+    all: !!values.all,
+    port: !!values.port,
+    user: !!values.user,
+    option: !!values.option,
+    short: !!values.short,
+    help: !!values.help,
   };
   options.port = options.port || options.all;
   options.user = options.user || options.all;
@@ -160,6 +166,16 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
 (async () => {
   try {
     const options = parseOptions();
+    if (options.help) {
+      console.log('Usage: sshls [-a] [-p] [-u] [-o] [-s] [-h]');
+      console.log('Options:');
+      console.log('  -a: Show all information');
+      console.log('  -p: Show port information');
+      console.log('  -u: Show user information');
+      console.log('  -o: Show option information');
+      console.log('  -s: Show short information');
+      console.log('  -h: Show help');
+    }
     if (!HOME_DIR) {
       throw new Error('ホームディレクトリが見つかりません');
     }
@@ -181,4 +197,6 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
       console.log('エラーが発生しました。');
     }
   }
+  console.log('values', values);
+  console.log('positionals', positionals);
 })();

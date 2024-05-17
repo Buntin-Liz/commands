@@ -14,6 +14,7 @@ const homeDir = Bun.env.HOME;
 type GithubLoginEntry = {
   configname: string;
   username: string;
+  gitconfigPath: string;
   secKeyPath: string;
   pubKeyPath: string;
 };
@@ -22,12 +23,14 @@ const githubSSHKeys: GithubLoginEntry[] = [
   {
     configname: 'buntinjp',
     username: 'BuntinJP',
+    gitconfigPath: '/Users/takumi.aoki/.gitconfig.buntinjp',
     secKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinjp',
     pubKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinjp.pub',
   },
   {
     configname: 'buntinliz',
     username: 'Buntin-Liz',
+    gitconfigPath: '/Users/takumi.aoki/.gitconfig.buntinliz',
     secKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinliz',
     pubKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinliz.pub',
   },
@@ -63,7 +66,7 @@ const selectRandomNumberInRange = (shouldNotBe: number, max: number) => {
   }
   const indexOfNewGithubLoginEntry = selectRandomNumberInRange(indexOfCurrentGithubLoginEntry, githubSSHKeys.length);
   const newGithubLoginEntry = githubSSHKeys[indexOfNewGithubLoginEntry];
-  console.log(`Change Github Identity into ${newGithubLoginEntry.configname}`);
+  console.log(`Change Github Identity into [${newGithubLoginEntry.configname}]`);
   console.log(`新しいGitHub用のSSH鍵を設定します。\nNew SSH key: ${newGithubLoginEntry.secKeyPath}`);
   const newConfigContentLines = configContentLines.map((line) => {
     if (line.includes('IdentityFile') && line.includes('github_')) {
@@ -71,18 +74,17 @@ const selectRandomNumberInRange = (shouldNotBe: number, max: number) => {
     }
     return line;
   });
-  console.log(await Bun.write(configPath, newConfigContentLines.join('\n')));
+  await Bun.write(configPath, newConfigContentLines.join('\n'));
 
   console.log('gitconfigを差し替えます。');
-  const newConfigPath = path.join(homeDir, `.gitconfig.${newGithubLoginEntry.configname}`);
-  const newConfigFile = Bun.file(newConfigPath);
+  const newConfigFile = Bun.file(newGithubLoginEntry.gitconfigPath);
   if (await newConfigFile.exists()) {
-    console.log(`[.gitconfig.${newGithubLoginEntry.configname}] 存在確認: OK`);
+    console.log(`[${newGithubLoginEntry.gitconfigPath}] 存在確認: OK`);
   } else {
     console.log('gitconfig not found.');
     process.exit(1);
   }
-  const result1 = await $`cd ${homeDir} && unlink .gitconfig && ln -s ${newConfigPath} .gitconfig`;
+  const result1 = await $`cd ${homeDir} && unlink .gitconfig && ln -s ${newGithubLoginEntry.gitconfigPath} .gitconfig`;
   if (result1.exitCode !== 0) {
     console.error('gitconfigの差し替えに失敗しました。');
     process.exit(1);
@@ -90,6 +92,4 @@ const selectRandomNumberInRange = (shouldNotBe: number, max: number) => {
     console.log('gitconfigの差し替えに成功しました。');
   }
   console.log('SSH鍵の差し替えが完了しました。');
-  const result2 = await $`ssh -T git@github.com`.text();
-  console.log(result2);
 })();
