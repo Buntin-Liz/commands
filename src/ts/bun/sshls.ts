@@ -7,30 +7,12 @@ const HOME_DIR = os.homedir();
 const { values, positionals } = parseArgs({
   args: Bun.argv,
   options: {
-    all: {
-      type: 'boolean',
-      short: 'a',
-    },
-    port: {
-      type: 'boolean',
-      short: 'p',
-    },
-    user: {
-      type: 'boolean',
-      short: 'u',
-    },
-    option: {
-      type: 'boolean',
-      short: 'o',
-    },
-    short: {
-      type: 'boolean',
-      short: 's',
-    },
-    help: {
-      type: 'boolean',
-      short: 'h',
-    },
+    all: { type: 'boolean', short: 'a' },
+    port: { type: 'boolean', short: 'p' },
+    user: { type: 'boolean', short: 'u' },
+    option: { type: 'boolean', short: 'o' },
+    short: { type: 'boolean', short: 's' },
+    help: { type: 'boolean', short: 'h' },
   },
   strict: true,
   allowPositionals: true,
@@ -55,19 +37,15 @@ type Ops = {
   help: boolean;
 };
 
-const parseOptions = (): Ops => {
-  const options = {
+const parseOptions = (values: any): Ops => {
+  return {
     all: !!values.all,
-    port: !!values.port,
-    user: !!values.user,
-    option: !!values.option,
+    port: !!values.all || !!values.port,
+    user: !!values.all || !!values.user,
+    option: !!values.all || !!values.option,
     short: !!values.short,
     help: !!values.help,
   };
-  options.port = options.port || options.all;
-  options.user = options.user || options.all;
-  options.option = options.option || options.all;
-  return options;
 };
 
 const parseLine = (host: Host, line: string): void => {
@@ -129,18 +107,10 @@ const calculateMaxLengths = (hosts: Host[]) => {
   let maxPortLength = 0;
   let maxUserLength = 0;
   hosts.forEach((host) => {
-    if (JSON.stringify(host.alias).length > maxAliasLength) {
-      maxAliasLength = JSON.stringify(host.alias).length;
-    }
-    if (host.hostname.length > maxHostnameLength) {
-      maxHostnameLength = host.hostname.length;
-    }
-    if (host.port.toString().length > maxPortLength) {
-      maxPortLength = host.port.toString().length;
-    }
-    if (host.user.length > maxUserLength) {
-      maxUserLength = host.user.length;
-    }
+    maxAliasLength = Math.max(maxAliasLength, JSON.stringify(host.alias).length);
+    maxHostnameLength = Math.max(maxHostnameLength, host.hostname.length);
+    maxPortLength = Math.max(maxPortLength, host.port.toString().length);
+    maxUserLength = Math.max(maxUserLength, host.user.length);
   });
   return [maxAliasLength, maxHostnameLength, maxPortLength, maxUserLength];
 };
@@ -165,7 +135,7 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
 
 (async () => {
   try {
-    const options = parseOptions();
+    const options = parseOptions(values);
     if (options.help) {
       console.log('Usage: sshls [-a] [-p] [-u] [-o] [-s] [-h]');
       console.log('Options:');
@@ -175,20 +145,24 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
       console.log('  -o: Show option information');
       console.log('  -s: Show short information');
       console.log('  -h: Show help');
-    }
-    if (!HOME_DIR) {
-      throw new Error('ホームディレクトリが見つかりません');
-    }
-    const data = Bun.file(`${HOME_DIR}/.ssh/config`);
-    if (!(await data.exists())) {
-      throw new Error('SSH設定ファイルが見つかりません');
-    }
-    const content = await data.text();
-    const hostSections = splitByHosts(content);
-    const hosts = hostSections.map(parseHost);
-    const lengths = calculateMaxLengths(hosts);
-    for (const host of hosts) {
-      printHostInfo(host, lengths, options);
+    } else {
+      if (!HOME_DIR) {
+        throw new Error('ホームディレクトリが見つかりません');
+      }
+      const data = Bun.file(`${HOME_DIR}/.ssh/config`);
+      if (!(await data.exists())) {
+        throw new Error('SSH設定ファイルが見つかりません');
+      }
+      const query = positionals.slice(2);
+      const content = await data.text();
+      const hostSections = splitByHosts(content);
+      const hosts = hostSections.map(parseHost);
+      const lengths = calculateMaxLengths(hosts);
+      for (const host of hosts) {
+        if (query.length === 0 || host.alias.some((alias) => alias.includes(query[0]))) {
+          printHostInfo(host, lengths, options);
+        }
+      }
     }
   } catch (error) {
     if (error instanceof Error) {
@@ -197,6 +171,4 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
       console.log('エラーが発生しました。');
     }
   }
-  console.log('values', values);
-  console.log('positionals', positionals);
 })();
