@@ -1,1 +1,0 @@
-/Users/Buntin-LArchel/commands/src/index.bun.sh
