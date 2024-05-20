@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
+
 import { $ } from 'bun';
 import { parseArgs } from 'util';
 import path from 'node:path';
+
 const args = parseArgs({
   args: Bun.argv,
   options: {},
@@ -19,53 +21,63 @@ type GithubLoginEntry = {
   pubKeyPath: string;
 };
 
-const githubSSHKeys: GithubLoginEntry[] = [
-  {
-    configname: 'buntinjp',
-    username: 'BuntinJP',
-    gitconfigPath: '/Users/takumi.aoki/.gitconfig.buntinjp',
-    secKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinjp',
-    pubKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinjp.pub',
-  },
-  {
-    configname: 'buntinliz',
-    username: 'Buntin-Liz',
-    gitconfigPath: '/Users/takumi.aoki/.gitconfig.buntinliz',
-    secKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinliz',
-    pubKeyPath: '/Users/takumi.aoki/ssh/keys/github_buntinliz.pub',
-  },
-];
+const chghConfigFilePath = path.join(Bun.env.COMMANDS_INSTALL!, 'configs', 'chgh.json');
 
-const selectRandomNumberInRange = (shouldNotBe: number, max: number) => {
-  let random = Math.floor(Math.random() * max);
-  while (random === shouldNotBe) {
-    random = Math.floor(Math.random() * max);
+const getGithubLoginEntry = async () => {
+  const loginEntryFile = Bun.file(chghConfigFilePath);
+  if (await loginEntryFile.exists()) {
+    const loginEntryJsonAry: GithubLoginEntry[] = await loginEntryFile.json();
+    return loginEntryJsonAry;
   }
-  return random;
+  return undefined;
+};
+
+const selectNewIndex = (currentIndex: number, max: number) => {
+  if (max <= 1) {
+    throw new Error('There should be more than one GitHub login entry to choose a different one.');
+  }
+  let newIndex = Math.floor(Math.random() * (max - 1));
+  if (newIndex >= currentIndex) {
+    newIndex++;
+  }
+  return newIndex;
 };
 
 (async () => {
+  const githubLoginEntries = await getGithubLoginEntry();
   if (homeDir === undefined) {
     console.error('HOME environment variable is not set.');
+    process.exit(1);
+  } else if (githubLoginEntries === undefined) {
+    console.error(`GitHubのログイン情報が設定されていないか、読み込めません。\n設定ファイル: $COMMANDS_INSTALL/config/chgh.json [${chghConfigFilePath}]`);
     process.exit(1);
   }
   const configPath = path.join(homeDir, '.ssh', 'config');
   console.log('SSH鍵を差し替えます。');
-  const configContentLines = (await Bun.file(configPath).text()).split('\n').map((line) => line.trim());
+  const configContentLines = (await Bun.file(configPath).text()).split('\n').map((line) => {
+    if (line.trim() === '') {
+      return '';
+    } else if (line.startsWith('Host ')) {
+      return line;
+    } else {
+      return '  ' + line.trim();
+    }
+  });
+
   const githubIdentityFileName = configContentLines.find((line) => line.includes('IdentityFile') && line.includes('github_'));
   if (githubIdentityFileName === undefined) {
     console.error('GitHub用のSSH鍵が設定されていません。');
     process.exit(1);
   }
-  const githubIdentityFilePath = githubIdentityFileName.split(' ')[1];
+  const githubIdentityFilePath = githubIdentityFileName.trim().split(' ')[1];
   const githubIdentityFileNameWithoutPath = path.basename(githubIdentityFilePath);
-  const indexOfCurrentGithubLoginEntry = githubSSHKeys.findIndex((entry) => entry.secKeyPath.includes(githubIdentityFileNameWithoutPath));
+  const indexOfCurrentGithubLoginEntry = githubLoginEntries.findIndex((entry) => entry.secKeyPath.includes(githubIdentityFileNameWithoutPath));
   if (indexOfCurrentGithubLoginEntry === -1) {
     console.error('設定されているGitHub用のSSH鍵が見つかりません。');
     process.exit(1);
   }
-  const indexOfNewGithubLoginEntry = selectRandomNumberInRange(indexOfCurrentGithubLoginEntry, githubSSHKeys.length);
-  const newGithubLoginEntry = githubSSHKeys[indexOfNewGithubLoginEntry];
+  const indexOfNewGithubLoginEntry = selectNewIndex(indexOfCurrentGithubLoginEntry, githubLoginEntries.length);
+  const newGithubLoginEntry = githubLoginEntries[indexOfNewGithubLoginEntry];
   console.log(`Change Github Identity into [${newGithubLoginEntry.configname}]`);
   console.log(`新しいGitHub用のSSH鍵を設定します。\nNew SSH key: ${newGithubLoginEntry.secKeyPath}`);
   const newConfigContentLines = configContentLines.map((line) => {

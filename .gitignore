@@ -14,3 +14,5 @@ bin/*
 .DS_Store
 
 info.json
+
+configs/*.json

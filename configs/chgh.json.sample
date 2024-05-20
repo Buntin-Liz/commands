@@ -1,0 +1,16 @@
+[
+  {
+    "configname": "buntinjp",
+    "username": "BuntinJP",
+    "gitconfigPath": "/Users/takumi.aoki/.gitconfig.buntinjp",
+    "secKeyPath": "/Users/takumi.aoki/ssh/keys/github_buntinjp",
+    "pubKeyPath": "/Users/takumi.aoki/ssh/keys/github_buntinjp.pub"
+  },
+  {
+    "configname": "buntinliz",
+    "username": "Buntin-Liz",
+    "gitconfigPath": "/Users/takumi.aoki/.gitconfig.buntinliz",
+    "secKeyPath": "/Users/takumi.aoki/ssh/keys/github_buntinliz",
+    "pubKeyPath": "/Users/takumi.aoki/ssh/keys/github_buntinliz.pub"
+  }
+]
