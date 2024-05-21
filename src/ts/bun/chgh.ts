@@ -4,9 +4,13 @@ import { $ } from 'bun';
 import { parseArgs } from 'util';
 import path from 'node:path';
 
-const args = parseArgs({
+const { values } = parseArgs({
   args: Bun.argv,
-  options: {},
+  options: {
+    config: { type: 'boolean', short: 'c' },
+    no: { type: 'boolean', short: 'n' },
+    help: { type: 'boolean', short: 'h' },
+  },
   strict: true,
   allowPositionals: true,
 });
@@ -43,28 +47,56 @@ const selectNewIndex = (currentIndex: number, max: number) => {
   return newIndex;
 };
 
-(async () => {
+const checkGithubLoginEntries = async (): Promise<GithubLoginEntry[]> => {
   const githubLoginEntries = await getGithubLoginEntry();
-  if (homeDir === undefined) {
-    console.error('HOME environment variable is not set.');
-    process.exit(1);
-  } else if (githubLoginEntries === undefined) {
+  if (githubLoginEntries === undefined) {
     console.error(`GitHubのログイン情報が設定されていないか、読み込めません。\n設定ファイル: $COMMANDS_INSTALL/config/chgh.json [${chghConfigFilePath}]`);
     process.exit(1);
   }
+  const notExistFiles: string[] = [];
+  for (const entry of githubLoginEntries) {
+    if (!(await Bun.file(entry.gitconfigPath).exists())) {
+      notExistFiles.push(entry.gitconfigPath);
+    }
+    if (!(await Bun.file(entry.secKeyPath).exists())) {
+      notExistFiles.push(entry.secKeyPath);
+    }
+    if (!(await Bun.file(entry.pubKeyPath).exists())) {
+      notExistFiles.push(entry.pubKeyPath);
+    }
+  }
+  if (notExistFiles.length !== 0) {
+    console.error(`以下のファイルが存在しません。\n${notExistFiles.join('\n')}\n設定ファイル: $COMMANDS_INSTALL/config/chgh.json [${chghConfigFilePath}]`);
+    process.exit(1);
+  }
+  return githubLoginEntries;
+};
+
+(async () => {
+  if (homeDir === undefined) {
+    console.error('HOME environment variable is not set.');
+    process.exit(1);
+  }
+  console.log('chgh設定情報を確認します...');
+  const githubLoginEntries = await checkGithubLoginEntries();
   const configPath = path.join(homeDir, '.ssh', 'config');
-  console.log('SSH鍵を差し替えます。');
+  console.log('現在のSSH設定を確認します...');
   const configContentLines = (await Bun.file(configPath).text()).split('\n').map((line) => {
     if (line.trim() === '') {
       return '';
     } else if (line.startsWith('Host ')) {
-      return line;
+      return line.trim();
     } else {
       return '  ' + line.trim();
     }
   });
+  if (values.config) {
+    console.log('SSH設定ファイルを整理します...');
+    await Bun.write(configPath, configContentLines.join('\n'));
+  }
 
-  const githubIdentityFileName = configContentLines.find((line) => line.includes('IdentityFile') && line.includes('github_'));
+  // githubの鍵を探すプログラムが薄い
+  const githubIdentityFileName = configContentLines.find((line) => line.includes('IdentityFile') && line.includes('github'));
   if (githubIdentityFileName === undefined) {
     console.error('GitHub用のSSH鍵が設定されていません。');
     process.exit(1);
@@ -81,7 +113,8 @@ const selectNewIndex = (currentIndex: number, max: number) => {
   console.log(`Change Github Identity into [${newGithubLoginEntry.configname}]`);
   console.log(`新しいGitHub用のSSH鍵を設定します。\nNew SSH key: ${newGithubLoginEntry.secKeyPath}`);
   const newConfigContentLines = configContentLines.map((line) => {
-    if (line.includes('IdentityFile') && line.includes('github_')) {
+    // githubの鍵を探すプログラムが薄い
+    if (line.includes('IdentityFile') && line.includes('github')) {
       return `  IdentityFile ${newGithubLoginEntry.secKeyPath}`;
     }
     return line;
@@ -90,12 +123,6 @@ const selectNewIndex = (currentIndex: number, max: number) => {
 
   console.log('gitconfigを差し替えます。');
   const newConfigFile = Bun.file(newGithubLoginEntry.gitconfigPath);
-  if (await newConfigFile.exists()) {
-    console.log(`[${newGithubLoginEntry.gitconfigPath}] 存在確認: OK`);
-  } else {
-    console.log('gitconfig not found.');
-    process.exit(1);
-  }
   const result1 = await $`cd ${homeDir} && unlink .gitconfig && ln -s ${newGithubLoginEntry.gitconfigPath} .gitconfig`;
   if (result1.exitCode !== 0) {
     console.error('gitconfigの差し替えに失敗しました。');
