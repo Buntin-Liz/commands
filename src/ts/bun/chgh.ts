@@ -72,7 +72,19 @@ const checkGithubLoginEntries = async (): Promise<GithubLoginEntry[]> => {
   return githubLoginEntries;
 };
 
+const showHelp = () => {
+  console.log('Usage: chgh [-c] [-n] [-h] or chgh [-cn]');
+  console.log('Options:');
+  console.log('  -c: format ssh config file');
+  console.log('  -n: No prompt & slide ssh settings');
+  console.log('  -h: Show help');
+};
+
 (async () => {
+  if (values.help) {
+    showHelp();
+    process.exit(0);
+  }
   if (homeDir === undefined) {
     console.error('HOME environment variable is not set.');
     process.exit(1);
