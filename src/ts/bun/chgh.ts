@@ -3,6 +3,7 @@
 import { $ } from 'bun';
 import { parseArgs } from 'util';
 import path from 'node:path';
+import Enquirer from 'enquirer';
 
 const { values } = parseArgs({
   args: Bun.argv,
@@ -16,6 +17,10 @@ const { values } = parseArgs({
 });
 
 const homeDir = Bun.env.HOME;
+if (homeDir === undefined) {
+  console.error('HOME environment variable is not set.');
+  process.exit(1);
+}
 
 type GithubLoginEntry = {
   configname: string;
@@ -26,6 +31,7 @@ type GithubLoginEntry = {
 };
 
 const chghConfigFilePath = path.join(Bun.env.COMMANDS_INSTALL!, 'configs', 'chgh.json');
+const configPath = path.join(homeDir, '.ssh', 'config');
 
 const getGithubLoginEntry = async () => {
   const loginEntryFile = Bun.file(chghConfigFilePath);
@@ -36,7 +42,18 @@ const getGithubLoginEntry = async () => {
   return undefined;
 };
 
-const selectNewIndex = (currentIndex: number, max: number) => {
+const getCurrentSSHConfigContent = async (): Promise<string[]> =>
+  (await Bun.file(configPath).text()).split('\n').map((line) => {
+    if (line.trim() === '') {
+      return '';
+    } else if (line.startsWith('Host ')) {
+      return line.trim();
+    } else {
+      return '  ' + line.trim();
+    }
+  });
+
+const selectNewIndexWithoutPrompt = (currentIndex: number, max: number) => {
   if (max <= 1) {
     throw new Error('There should be more than one GitHub login entry to choose a different one.');
   }
@@ -80,33 +97,30 @@ const showHelp = () => {
   console.log('  -h: Show help');
 };
 
+const migrateToNewConfig = async (newGithubLoginEntry: GithubLoginEntry) => {
+  console.log(`Change Github Identity into [${newGithubLoginEntry.configname}]`);
+  console.log(`新しいGitHub用のSSH鍵を設定します。\nNew SSH key: ${newGithubLoginEntry.secKeyPath}`);
+  const newConfigContentLines = (await getCurrentSSHConfigContent()).map((line) =>
+    line.includes('IdentityFile') && line.includes('github') ? `  IdentityFile ${newGithubLoginEntry.secKeyPath}` : line
+  );
+  await Bun.write(configPath, newConfigContentLines.join('\n'));
+  console.log('gitconfigを差し替えます。');
+  return $`cd ${homeDir} && unlink .gitconfig && ln -s ${newGithubLoginEntry.gitconfigPath} .gitconfig`;
+};
+
 (async () => {
   if (values.help) {
     showHelp();
     process.exit(0);
   }
-  if (homeDir === undefined) {
-    console.error('HOME environment variable is not set.');
-    process.exit(1);
-  }
   console.log('chgh設定情報を確認します...');
   const githubLoginEntries = await checkGithubLoginEntries();
-  const configPath = path.join(homeDir, '.ssh', 'config');
   console.log('現在のSSH設定を確認します...');
-  const configContentLines = (await Bun.file(configPath).text()).split('\n').map((line) => {
-    if (line.trim() === '') {
-      return '';
-    } else if (line.startsWith('Host ')) {
-      return line.trim();
-    } else {
-      return '  ' + line.trim();
-    }
-  });
+  const configContentLines = await getCurrentSSHConfigContent();
   if (values.config) {
     console.log('SSH設定ファイルを整理します...');
     await Bun.write(configPath, configContentLines.join('\n'));
   }
-
   // githubの鍵を探すプログラムが薄い
   const githubIdentityFileName = configContentLines.find((line) => line.includes('IdentityFile') && line.includes('github'));
   if (githubIdentityFileName === undefined) {
@@ -120,23 +134,22 @@ const showHelp = () => {
     console.error('設定されているGitHub用のSSH鍵が見つかりません。');
     process.exit(1);
   }
-  const indexOfNewGithubLoginEntry = selectNewIndex(indexOfCurrentGithubLoginEntry, githubLoginEntries.length);
-  const newGithubLoginEntry = githubLoginEntries[indexOfNewGithubLoginEntry];
-  console.log(`Change Github Identity into [${newGithubLoginEntry.configname}]`);
-  console.log(`新しいGitHub用のSSH鍵を設定します。\nNew SSH key: ${newGithubLoginEntry.secKeyPath}`);
-  const newConfigContentLines = configContentLines.map((line) => {
-    // githubの鍵を探すプログラムが薄い
-    if (line.includes('IdentityFile') && line.includes('github')) {
-      return `  IdentityFile ${newGithubLoginEntry.secKeyPath}`;
-    }
-    return line;
-  });
-  await Bun.write(configPath, newConfigContentLines.join('\n'));
 
-  console.log('gitconfigを差し替えます。');
-  const newConfigFile = Bun.file(newGithubLoginEntry.gitconfigPath);
-  const result1 = await $`cd ${homeDir} && unlink .gitconfig && ln -s ${newGithubLoginEntry.gitconfigPath} .gitconfig`;
-  if (result1.exitCode !== 0) {
+  let indexOfNewGithubLoginEntry = selectNewIndexWithoutPrompt(indexOfCurrentGithubLoginEntry, githubLoginEntries.length);
+  if (!values.no) {
+    // enquirer
+    const question = {
+      type: 'select',
+      name: 'target',
+      message: '切り替え対象のGitHubアカウントを選択してください',
+      choices: githubLoginEntries.map((entry) => entry.configname),
+    };
+    const { target } = (await Enquirer.prompt(question)) as { target: string };
+    const indexOfSelectedGithubLoginEntry = githubLoginEntries.findIndex((entry) => entry.configname === target);
+    indexOfNewGithubLoginEntry = indexOfSelectedGithubLoginEntry !== -1 ? indexOfSelectedGithubLoginEntry : indexOfNewGithubLoginEntry;
+  }
+  const result = await migrateToNewConfig(githubLoginEntries[indexOfNewGithubLoginEntry]);
+  if (result.exitCode !== 0) {
     console.error('gitconfigの差し替えに失敗しました。');
     process.exit(1);
   } else {
