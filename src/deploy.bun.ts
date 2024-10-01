@@ -75,114 +75,6 @@ const processDirectory = async (targetDir: string, binDir: string, options: { if
   return result;
 };
 
-/* 
-
-const solveOneDir = async (
-  targetDir: string,
-  binDir: string
-): Promise<Result> => {
-  const result = genResult();
-  const targetDirEnts = await fs.readdir(targetDir, { withFileTypes: true });
-  const scripts = targetDirEnts.filter((ent) => ent.isFile());
-  for (const script of scripts) {
-    const scriptPath = join(targetDir, script.name);
-    const scriptNameWithoutExt = script.name.split('.')[0];
-    const binPath = join(binDir, scriptNameWithoutExt);
-    const logname = relative(process.cwd(), scriptPath);
-    console.log('scriptPath', scriptPath);
-    console.log('scriptNameWithoutExt', scriptNameWithoutExt);
-    console.log('binPath', binPath);
-    console.log('logname', logname);
-    console.log('parsed');
-    const parsed = parse(scriptPath);
-    console.log(JSON.stringify(parsed, null, 2));
-    if (['deploy', 'hinagata'].includes(scriptNameWithoutExt)) {
-      // 無視
-      continue;
-    }
-    if (script.name.startsWith('_')) {
-      // 処理スキップ
-      result.skipped.push(script.name);
-      continue;
-    }
-    try {
-      await fs.symlink(scriptPath, binPath);
-      result.created.push(logname);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(error.message);
-      } else {
-        console.error('error is not instance of Error.');
-      }
-      result.notCreated.push(logname);
-      result.error = true;
-    }
-  }
-  return result;
-};
-
-const solveTSDir = async (targetDir: string, binDir: string) => {
-  const result = genResult();
-  const ifDeno = targetDir.includes('deno');
-  const ifBun = targetDir.includes('bun');
-
-  const targetDirEnts = await fs.readdir(targetDir, { withFileTypes: true });
-  const scripts = targetDirEnts.filter(
-    (ent) => ent.isFile() && ent.name.endsWith('.ts')
-  );
-  for (const script of scripts) {
-    const scriptPath = join(targetDir, script.name);
-    const scriptNameWithoutExt = script.name.split('.')[0];
-    const binPath = join(binDir, scriptNameWithoutExt);
-    const logname = relative(process.cwd(), scriptPath);
-    console.log('scriptPath', scriptPath);
-    console.log('scriptNameWithoutExt', scriptNameWithoutExt);
-    console.log('binPath', binPath);
-    console.log('logname', logname);
-    console.log('parsed');
-    const parsed = parse(scriptPath);
-    console.log(JSON.stringify(parsed, null, 2));
-    if (['deploy', 'hinagata'].includes(scriptNameWithoutExt)) {
-      continue;
-    }
-    if (script.name.startsWith('_')) {
-      result.skipped.push(script.name);
-      continue;
-    }
-    try {
-      let compileResult: ShellOutput | undefined = undefined;
-      if (ifDeno) {
-        compileResult =
-          await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
-        if (compileResult.exitCode === 0) {
-          result.created.push(logname);
-        } else {
-          result.notCreated.push(logname);
-          result.error = true;
-        }
-      } else if (ifBun) {
-        console.log(
-          'this dir is ignored. Now, Bun scripts should be linked as "not compiled".'
-        );
-      } else {
-        console.log('this dir is ignored. not deno nor bun.');
-      }
-      //
-    } catch (error) {
-      if (error instanceof Error) {
-        console.error(error.message);
-      } else {
-        console.error('error is not instance of Error.');
-      }
-      result.notCreated.push(logname);
-      result.error = true;
-    }
-  }
-  return result;
-};
-
-*/
-
 const isPathSet = (binDir: string) => {
   const path = Bun.env.PATH ?? '';
   return path.split(':').includes(binDir);
@@ -219,35 +111,8 @@ const updateShellConfig = async (shell: string, binDir: string): Promise<void> =
     }
   }
 };
-// const updateShellConfig = async (shell: string, binDir: string) => {
-//   const homeDir = Deno.env.get('HOME');
-//   if (!homeDir) {
-//     console.log('エラーが発生しました: 環境変数 $HOME が設定されていません。');
-//     return;
-//   }
-//   try {
-//     if (!(await Deno.stat(binDir)).isDirectory)
-//       throw new Error(`binDir(${binDir}) is not a directory.`);
-//     const keyword = `export PATH="${binDir}:$PATH"\n`;
-//     const configFile =
-//       shell === 'zsh' ? `${homeDir}/.zshrc` : `${homeDir}/.bashrc`;
-//     console.log(`以下の内容を ${configFile} に追加します: \n${keyword}\n`);
-//     if (await $.confirm('変更を適用してよろしいですか？')) {
-//       await Deno.writeTextFile(configFile, keyword, { append: true });
-//       await Deno.writeTextFile(configFile, '\n', { append: true });
-//       console.log(`${configFile} が更新されました。`);
-//     } else {
-//       console.log('変更はキャンセルされました。');
-//     }
-//   } catch (error) {
-//     console.log(
-//       `エラーが発生しました: 指定されたパス(${binDir}) にアクセスできません。`
-//     );
-//     console.error(error);
-//   }
-// };
 
-//Deno API 不使用
+//[duplicated] Deno API
 const logTheTable = (t: string[]) => {
   const result = t.reduce((acc, cur) => {
     return (acc += `- ${cur} \n`);
@@ -265,8 +130,26 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
 const typedBasename = (pathString: string): string => basename(pathString);
 
 const setInfo = async () => {
-  //pwd
   try {
+    const result = await $`
+      shell=$(getent passwd "$USER" | cut -d: -f7 2>/dev/null)
+      if [ -z "$shell" ]; then
+        shell="-1"
+      fi
+
+      home=$(echo "$HOME" 2>/dev/null)
+      if [ -z "$home" ]; then
+        home="-1"
+      fi
+
+      user=$(whoami 2>/dev/null)
+      if [ -z "$user" ]; then
+        user="-1"
+      fi
+
+      # print result
+      echo "$shell $home $user"
+  `;
     const COMMANDS_INSTALL = (await $`pwd`.text()).trim();
     const HOME_DIRECTORY = os.homedir().trim();
     const USER_NAME = os.userInfo().username.trim();
