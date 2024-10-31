@@ -16,3 +16,5 @@ bin/*
 info.json
 
 configs/*.json
+
+commands_install.sh

@@ -6,10 +6,12 @@
 #          Execute this from zsh or bash
 ###
 # Check current directory is root of git repository
+
 if [ "$(git rev-parse --show-toplevel 2> /dev/null)" = "$(pwd)" ]; then
-  echo "現在のディレクトリはGitリポジトリのルートです。"
+  echo "$(pwd) is Repo root."
 else
-  echo "現在のディレクトリはGitリポジトリのルートではありません。"
+  echo "$(pwd) is not Repo root."
+  exit(1)
 fi
 
 # Bun install

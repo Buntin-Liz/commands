@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
+import { promises as fs, type Dirent, constants as fsConstants } from 'node:fs';
+import { basename, dirname, join, parse, relative } from 'node:path';
 import { $ } from 'bun';
-import { Dirent, promises as fs, constants as fsConstants } from 'fs';
-import { join, basename, dirname, parse, relative } from 'node:path';
 
+import os from 'node:os';
 import chalk from 'chalk';
-import os from 'os';
 
 const infoPath = join('info.json');
 
@@ -30,37 +30,59 @@ const genResult = (): Result => ({
   skipped: [],
 });
 
-const processScript = async (script: Dirent, targetDir: string, binDir: string, options: { ifDeno: boolean; ifBun: boolean }): Promise<{ logname: string; success: boolean; skip: boolean }> => {
+const processScript = async (
+  script: Dirent,
+  targetDir: string,
+  binDir: string,
+  options: { ifDeno: boolean; ifBun: boolean },
+): Promise<{ logname: string; success: boolean; skip: boolean }> => {
   const scriptPath = join(targetDir, script.name);
   const scriptNameWithoutExt = script.name.split('.')[0];
   const binPath = join(binDir, scriptNameWithoutExt);
   const logname = relative(process.cwd(), scriptPath);
 
-  if (['deploy', 'hinagata'].includes(scriptNameWithoutExt) || script.name.startsWith('_')) {
+  if (
+    ['deploy', 'hinagata'].includes(scriptNameWithoutExt) ||
+    script.name.startsWith('_')
+  ) {
     return { logname, success: true, skip: true };
   }
 
   try {
     if (options.ifDeno) {
-      const compileResult = await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
+      const compileResult =
+        await $`deno compile --allow-all --output ${binPath} ${scriptPath}`;
       if (compileResult.exitCode !== 0) throw new Error('Deno compile failed');
     } else if (!options.ifBun) {
       await fs.symlink(scriptPath, binPath);
     }
     return { logname, success: true, skip: false };
   } catch (error) {
-    console.error(error instanceof Error ? error.message : 'An unknown error occurred');
+    console.error(
+      error instanceof Error ? error.message : 'An unknown error occurred',
+    );
     return { logname, success: false, skip: false };
   }
 };
 
-const processDirectory = async (targetDir: string, binDir: string, options: { ifDeno: boolean; ifBun: boolean }): Promise<Result> => {
+const processDirectory = async (
+  targetDir: string,
+  binDir: string,
+  options: { ifDeno: boolean; ifBun: boolean },
+): Promise<Result> => {
   const result = genResult();
   const targetDirEnts = await fs.readdir(targetDir, { withFileTypes: true });
-  const scripts = targetDirEnts.filter((ent) => ent.isFile() && (!options.ifBun || ent.name.endsWith('.ts')));
+  const scripts = targetDirEnts.filter(
+    (ent) => ent.isFile() && (!options.ifBun || ent.name.endsWith('.ts')),
+  );
 
   for (const script of scripts) {
-    const { logname, success, skip } = await processScript(script, targetDir, binDir, options);
+    const { logname, success, skip } = await processScript(
+      script,
+      targetDir,
+      binDir,
+      options,
+    );
     if (success) {
       if (skip) {
         result.skipped.push(logname);
@@ -80,44 +102,11 @@ const isPathSet = (binDir: string) => {
   return path.split(':').includes(binDir);
 };
 
-const getShell = () => {
-  const shell = os.userInfo().shell ?? '';
-  return shell.includes('zsh') ? 'zsh' : shell.includes('bash') ? 'bash' : 'unknown';
-};
-
-const updateShellConfig = async (shell: string, binDir: string): Promise<void> => {
-  const homeDir = os.homedir();
-  if (!homeDir) {
-    console.log('エラーが発生しました: 環境変数 $HOME が設定されていません。');
-    return;
-  } else if (!shell) {
-    console.log('エラーが発生しました: 環境変数 $SHELL が設定されていません。');
-    return;
-  } else {
-    console.log(`$HOME: ${homeDir}`);
-    console.log(`$SHELL: ${shell}`);
-  }
-  const configFile = shell.includes('zsh') ? join(homeDir, '.zshrc') : join(homeDir, '.bashrc');
-  const keyword = `export PATH="${binDir}:$PATH"\n`;
-
-  try {
-    await fs.appendFile(configFile, keyword);
-    console.log(`${configFile} が更新されました。`);
-  } catch (error) {
-    if (error instanceof Error) {
-      console.log(error.message);
-    } else {
-      console.log('エラーが発生しました。');
-    }
-  }
-};
-
-//[duplicated] Deno API
 const logTheTable = (t: string[]) => {
   const result = t.reduce((acc, cur) => {
-    return (acc += `- ${cur} \n`);
+    return `${acc}- ${cur} \n`;
   }, '');
-  return result + '\n';
+  return `${result}\n`;
 };
 
 const resultReducer = (acc: Result, cur: Result): Result => ({
@@ -128,87 +117,6 @@ const resultReducer = (acc: Result, cur: Result): Result => ({
   error: acc.error || cur.error,
 });
 const typedBasename = (pathString: string): string => basename(pathString);
-
-const setInfo = async () => {
-  try {
-    const result = await $`
-      shell=$(getent passwd "$USER" | cut -d: -f7 2>/dev/null)
-      if [ -z "$shell" ]; then
-        shell="-1"
-      fi
-
-      home=$(echo "$HOME" 2>/dev/null)
-      if [ -z "$home" ]; then
-        home="-1"
-      fi
-
-      user=$(whoami 2>/dev/null)
-      if [ -z "$user" ]; then
-        user="-1"
-      fi
-
-      # print result
-      echo "$shell $home $user"
-  `;
-    const COMMANDS_INSTALL = (await $`pwd`.text()).trim();
-    const HOME_DIRECTORY = os.homedir().trim();
-    const USER_NAME = os.userInfo().username.trim();
-    const info = { HOME_DIRECTORY, USER_NAME, COMMANDS_INSTALL };
-    const res = await Bun.write(infoPath, JSON.stringify(info, null, 2));
-    return 0;
-  } catch {
-    return 1;
-  }
-};
-const getInfo = async () => {
-  const info = await Bun.file(infoPath).text();
-  return JSON.parse(info) as Info;
-};
-
-const checkInfo = async () => {
-  try {
-    const info = Bun.file(infoPath);
-    if (await info.exists()) {
-      return 0;
-    } else {
-      console.log(chalk.bgRed('commands設定ファイルが見つかりませんでした。生成します。\n'));
-      const res = await setInfo();
-      if (res === 0) {
-        console.log('info.jsonの生成に成功しました。');
-        return 0;
-      } else {
-        console.log('info.jsonの生成に失敗しました。');
-        return -1;
-      }
-    }
-  } catch {
-    return -1;
-  }
-};
-
-const checkEnvVars = async () => {
-  const info = await getInfo();
-  const COMMANDS_INSTALL = Bun.env.COMMANDS_INSTALL;
-  const SHELL_CONFIG = join(Bun.env.HOME || '/User/takumi.aoki', '.zshrc');
-  if (COMMANDS_INSTALL === undefined) {
-    const keyword = `\n## commands install\nexport COMMANDS_INSTALL="${info.COMMANDS_INSTALL}"\n`;
-    try {
-      await fs.appendFile(SHELL_CONFIG, keyword);
-      console.log(`${SHELL_CONFIG} が更新されました。`);
-    } catch (error) {
-      if (error instanceof Error) {
-        console.log(error.message);
-      } else {
-        console.log('エラーが発生しました。');
-      }
-    } finally {
-      return -1;
-    }
-  } else {
-    console.log('環境変数 COMMANDS_INSTALL は既に設定されています。');
-    return 0;
-  }
-};
 
 (async () => {
   const srcDir = dirname(Bun.main);
@@ -229,7 +137,6 @@ const checkEnvVars = async () => {
     console.log('[debug] dirsObj:', JSON.stringify(dirsObj, null, 2));
   }
   //準備ここから
-  await checkInfo();
   const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
   srcDirs.push(bunDir);
   const srcTSDirs = [denoDir];
@@ -242,33 +149,51 @@ const checkEnvVars = async () => {
   // リンク、コンパイルここから
   const result = [
     //linker
-    ...(await Promise.all(srcDirs.map((srcDir) => processDirectory(srcDir, binDir, { ifDeno: false, ifBun: false })))),
-    ...(await Promise.all(srcTSDirs.map((srcDir) => processDirectory(srcDir, binDir, { ifDeno: true, ifBun: false })))),
+    ...(await Promise.all(
+      srcDirs.map((srcDir) =>
+        processDirectory(srcDir, binDir, { ifDeno: false, ifBun: false }),
+      ),
+    )),
+    ...(await Promise.all(
+      srcTSDirs.map((srcDir) =>
+        processDirectory(srcDir, binDir, { ifDeno: true, ifBun: false }),
+      ),
+    )),
   ].reduce(resultReducer, genResult());
 
   if (result.skipped.length > 0) {
-    console.log(chalk.bgYellow('以下のスクリプトはリンク作成をスキップしました。\n'));
+    console.log(
+      chalk.bgYellow('以下のスクリプトはリンク作成をスキップしました。\n'),
+    );
     console.log(chalk.yellow(logTheTable(result.skipped)));
   }
 
   if (result.error) {
-    console.log(chalk.bgRed('エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n'));
+    console.log(
+      chalk.bgRed(
+        'エラーが発生しています。\n以下のスクリプトについて、シンボリックリンクの作成に失敗しました。\n',
+      ),
+    );
     console.log(chalk.yellow(logTheTable(result.notCreated)));
   }
-  console.log(chalk.bgGreen('以下のスクリプトについて、シンボリックリンクの作成に成功しました。\n'));
+  console.log(
+    chalk.bgGreen(
+      '以下のスクリプトについて、シンボリックリンクの作成に成功しました。\n',
+    ),
+  );
   if (result.created.length === 0) {
     console.log('なし\n');
   } else {
     console.log(chalk.green(logTheTable(result.created)));
   }
   // リンク、コンパイルここまで
-  //PATH
-  console.log('\nPATH設定に移ります');
-  if (!isPathSet(binDir)) {
-    await updateShellConfig(getShell(), binDir);
-  } else {
-    console.log('PATHは既に設定されています。');
-  }
+  // //PATH
+  // console.log('\nPATH設定に移ります');
+  // if (!isPathSet(binDir)) {
+  //   await updateShellConfig(getShell(), binDir);
+  // } else {
+  //   console.log('PATHは既に設定されています。');
+  // }
   // //Permission
   // console.log('\nスクリプトのパーミッション設定を行います。');
   // const chmodResultBinDir = await $`chmod -R 755 ${binDir}`;
@@ -280,17 +205,14 @@ const checkEnvVars = async () => {
   //   if (chmodResultBinDir.stderr) console.log(chmodResultBinDir.stderr);
   //   if (chmodResultSrcDir.stderr) console.log(chmodResultSrcDir.stderr);
   // }
-  //Info
-  console.log('\ninfo.jsonを更新します。');
-  const infoResult = await setInfo();
-  if (infoResult === 0) {
-    console.log('info.jsonの更新に成功しました。');
-  } else {
-    console.log('info.jsonの更新に失敗しました。');
-  }
-  //環境変数関連
-  const envStatus = await checkEnvVars();
-  console.log();
+  // //Info
+  // console.log('\ninfo.jsonを更新します。');
+  // const infoResult = await setInfo();
+  // if (infoResult === 0) {
+  //   console.log('info.jsonの更新に成功しました。');
+  // } else {
+  //   console.log('info.jsonの更新に失敗しました。');
+  // }
   //Exit
   console.log('プログラムを終了します。');
   process.exit(result.error ? 1 : 0);
