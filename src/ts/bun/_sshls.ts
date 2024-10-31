@@ -54,8 +54,9 @@ const parseLine = (host: Host, line: string): void => {
     HostName: () => (host.hostname = line.replace('HostName ', '').trim()),
     Hostname: () => (host.hostname = line.replace('Hostname ', '').trim()),
     User: () => (host.user = line.replace('User ', '').trim()),
-    Port: () => (host.port = parseInt(line.replace('Port ', ''), 10)),
-    IdentityFile: () => (host.identityFile = line.replace('IdentityFile ', '').trim()),
+    Port: () => (host.port = Number.parseInt(line.replace('Port ', ''), 10)),
+    IdentityFile: () =>
+      (host.identityFile = line.replace('IdentityFile ', '').trim()),
     '#': () => {
       const [key, value] = line.replace('#', '').split(' ');
       host.keys.push(key);
@@ -107,7 +108,10 @@ const calculateMaxLengths = (hosts: Host[]) => {
   let maxPortLength = 0;
   let maxUserLength = 0;
   hosts.forEach((host) => {
-    maxAliasLength = Math.max(maxAliasLength, JSON.stringify(host.alias).length);
+    maxAliasLength = Math.max(
+      maxAliasLength,
+      JSON.stringify(host.alias).length,
+    );
     maxHostnameLength = Math.max(maxHostnameLength, host.hostname.length);
     maxPortLength = Math.max(maxPortLength, host.port.toString().length);
     maxUserLength = Math.max(maxUserLength, host.user.length);
@@ -118,12 +122,17 @@ const calculateMaxLengths = (hosts: Host[]) => {
 const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
   let optionInfoData = '';
   if (host.keys.length !== 0) {
-    optionInfoData = host.keys.map((key, index) => `${key}:${host.contents[index]}`).join('|');
+    optionInfoData = host.keys
+      .map((key, index) => `${key}:${host.contents[index]}`)
+      .join('|');
   }
-  const aliasSecondary = host.alias.length === 1 ? host.alias[0] : JSON.stringify(host.alias);
+  const aliasSecondary =
+    host.alias.length === 1 ? host.alias[0] : JSON.stringify(host.alias);
   const aliasStr = aliasSecondary.padEnd(lengths[0]);
   const hostnameStr = host.hostname.padEnd(lengths[1]);
-  const portStr = options.port ? `:${host.port.toString().padEnd(lengths[2])}` : '';
+  const portStr = options.port
+    ? `:${host.port.toString().padEnd(lengths[2])}`
+    : '';
   const userStr = options.user ? host.user.padEnd(lengths[3]) : '';
   const opsStr = options.option ? optionInfoData : '';
   if (options.short) {
@@ -159,7 +168,10 @@ const printHostInfo = (host: Host, lengths: number[], options: Ops) => {
       const hosts = hostSections.map(parseHost);
       const lengths = calculateMaxLengths(hosts);
       for (const host of hosts) {
-        if (query.length === 0 || host.alias.some((alias) => alias.includes(query[0]))) {
+        if (
+          query.length === 0 ||
+          host.alias.some((alias) => alias.includes(query[0]))
+        ) {
           printHostInfo(host, lengths, options);
         }
       }

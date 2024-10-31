@@ -1,4 +1,8 @@
 
 export PATH="$PATH:__COMMANDS_INSTALL_BIN__"
 
+## commands install
+export COMMANDS_INSTALL="__COMMANDS_INSTALL__"
+
+
 ## COMMANDS_ALIAS

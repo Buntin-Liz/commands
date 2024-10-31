@@ -16,13 +16,18 @@ const generateRCContent = (template: string, replObj: ReplObj[]): string => {
 
 // Env
 const COMMANDS_RC_PATH = 'commands_install.sh';
-const COMMANDS_INSTALL_BIN = `${(await $`pwd`.text()).trim()}/bin`;
+const COMMANDS_INSTALL = (await $`pwd`.text()).trim();
+const COMMANDS_INSTALL_BIN = `${COMMANDS_INSTALL}/bin`;
 
 const generateInstall = async () => {
   const sampleContent = await Bun.file(`${COMMANDS_RC_PATH}.sample`).text();
   const commandAliasContent = await Bun.file('commands_alias.sh').text();
 
   const replaceTable: ReplObj[] = [
+    {
+      replstr: '__COMMANDS_INSTALL__',
+      targetstr: COMMANDS_INSTALL,
+    },
     {
       replstr: '__COMMANDS_INSTALL_BIN__',
       targetstr: COMMANDS_INSTALL_BIN,
