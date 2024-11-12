@@ -28,7 +28,7 @@ else
 fi
 
 # 2. Check User Shell Config.
-echo "2. Check Shell Configurations"
+echo "2. Check Shell & RC_File Config"
 
 get_default_shell() {
   if command -v getent >/dev/null 2>&1; then
@@ -99,9 +99,6 @@ echo "OS:      $(uname)"
 echo "RC-File: $RC_FILE"
 echo "Shell:   $SHELL_NAME"
 echo "---"
-
-# 3. Calc RC files.
-echo "3. rc file setting."
 
 bun run lib/gen-install.ts
 

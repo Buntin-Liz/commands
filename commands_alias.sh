@@ -6,3 +6,6 @@ alias sshls='deno run -RE https://raw.githubusercontent.com/badcompany-tokyo/ssh
 # tree
 alias tree='tree -a -I "\.DS_Store|\.git|node_modules|vendor\/bundle" -N'
 
+# rmdsstore
+# remove all .DS_Store files. 
+alias rmdsstore='find . -name ".DS_Store" -exec rm -rf {} \;';
