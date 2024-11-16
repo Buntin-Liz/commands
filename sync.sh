@@ -103,7 +103,7 @@ echo "---"
 bun run lib/gen-install.ts
 
 if ! grep -Fxq "$LINE_TO_ADD" "$RC_FILE"; then
-  echo "\n$LINE_TO_ADD\n\n" >> "$RC_FILE"
+  echo -e "\n$LINE_TO_ADD\n\n" >> "$RC_FILE"
   echo "The line added to '$RC_FILE'"
 else
   echo "The line already exists in '$RC_FILE'"
