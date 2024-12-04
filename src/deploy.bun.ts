@@ -137,7 +137,9 @@ const typedBasename = (pathString: string): string => basename(pathString);
     console.log('[debug] dirsObj:', JSON.stringify(dirsObj, null, 2));
   }
   //準備ここから
-  const srcDirs = ['py', 'shell'].map((dir) => join(srcDir, dir));
+  const srcDirs = ['py', 'shell', 'applescript'].map((dir) =>
+    join(srcDir, dir),
+  );
   srcDirs.push(bunDir);
   const srcTSDirs = [denoDir];
   const initMessage = `リンク作成対象ディレクトリ${srcDirs.map(typedBasename).join(',')} \nコンパイル対象ディレクトリ${srcTSDirs.map(typedBasename).join(',')}`;
@@ -187,32 +189,17 @@ const typedBasename = (pathString: string): string => basename(pathString);
     console.log(chalk.green(logTheTable(result.created)));
   }
   // リンク、コンパイルここまで
-  // //PATH
-  // console.log('\nPATH設定に移ります');
-  // if (!isPathSet(binDir)) {
-  //   await updateShellConfig(getShell(), binDir);
-  // } else {
-  //   console.log('PATHは既に設定されています。');
-  // }
-  // //Permission
-  // console.log('\nスクリプトのパーミッション設定を行います。');
-  // const chmodResultBinDir = await $`chmod -R 755 ${binDir}`;
-  // const chmodResultSrcDir = await $`chmod -R 755 ${srcDir}`;
-  // if (chmodResultBinDir.exitCode === 0 && chmodResultSrcDir.exitCode === 0) {
-  //   console.log('パーミッションの変更に成功しました。');
-  // } else {
-  //   console.log('パーミッションの変更に失敗しました。');
-  //   if (chmodResultBinDir.stderr) console.log(chmodResultBinDir.stderr);
-  //   if (chmodResultSrcDir.stderr) console.log(chmodResultSrcDir.stderr);
-  // }
-  // //Info
-  // console.log('\ninfo.jsonを更新します。');
-  // const infoResult = await setInfo();
-  // if (infoResult === 0) {
-  //   console.log('info.jsonの更新に成功しました。');
-  // } else {
-  //   console.log('info.jsonの更新に失敗しました。');
-  // }
+  //Permission
+  console.log('\nスクリプトのパーミッション設定を行います。');
+  const chmodResultBinDir = await $`chmod -R 755 ${binDir}`;
+  const chmodResultSrcDir = await $`chmod -R 755 ${srcDir}`;
+  if (chmodResultBinDir.exitCode === 0 && chmodResultSrcDir.exitCode === 0) {
+    console.log('パーミッションの変更に成功しました。');
+  } else {
+    console.log('パーミッションの変更に失敗しました。');
+    if (chmodResultBinDir.stderr) console.log(chmodResultBinDir.stderr);
+    if (chmodResultSrcDir.stderr) console.log(chmodResultSrcDir.stderr);
+  }
   //Exit
   console.log('プログラムを終了します。');
   process.exit(result.error ? 1 : 0);
