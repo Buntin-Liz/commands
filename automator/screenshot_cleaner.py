@@ -3,7 +3,6 @@ import shutil
 import datetime
 import zipfile
 from pathlib import Path
-import tarfile
 
 """ 
 Env
