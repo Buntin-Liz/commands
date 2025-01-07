@@ -4,10 +4,6 @@ import datetime
 import zipfile
 from pathlib import Path
 
-""" 
-Env
-"""
-
 IMAGES_DIR_FORMAT = "%Y-%m-%d"
 
 
