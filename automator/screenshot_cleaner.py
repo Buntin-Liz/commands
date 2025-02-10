@@ -6,19 +6,21 @@ from pathlib import Path
 
 IMAGES_DIR_FORMAT = "%Y-%m-%d"
 
+DESKTOP_DIR = Path.home() / "Desktop"
+DOWNLOADS_DIR = Path.home() / "Downloads"
+ARCHIVE_DIR = DESKTOP_DIR / "archives"
+
 
 def organize_screenshots():
-    desktop_path = Path.home() / "Desktop"
-    screenshots_archive_path = desktop_path / "screenshots"
-    if not screenshots_archive_path.exists():
-        screenshots_archive_path.mkdir(parents=True, exist_ok=True)
+    if not ARCHIVE_DIR.exists():
+        ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     today_midnight = datetime.datetime.combine(datetime.datetime.today(), datetime.time.min)
     print(today_midnight)
-    for item in desktop_path.iterdir():
-        if item.is_file() and item.name.startswith("スクリーンショット "):
+    for item in DESKTOP_DIR.iterdir():
+        if item.is_file() and item.name.startswith("スクリーンショット ") and item.name.endswith(".png"):
             creation_time = datetime.datetime.fromtimestamp(item.stat().st_birthtime)
             if creation_time < today_midnight:
-                date_folder = screenshots_archive_path / creation_time.strftime(IMAGES_DIR_FORMAT)
+                date_folder = ARCHIVE_DIR / creation_time.strftime(IMAGES_DIR_FORMAT)
                 if not date_folder.exists():
                     date_folder.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(item), str(date_folder / item.name))
@@ -26,7 +28,7 @@ def organize_screenshots():
 
 
 def compress_old_directories():
-    screenshots_archive_path = Path.home() / "Desktop" / "screenshots"
+    screenshots_archive_path = ARCHIVE_DIR
     if not screenshots_archive_path.exists():
         return
     one_week_ago = datetime.datetime.combine((datetime.datetime.now() - datetime.timedelta(days=7)).date(), datetime.time.max)
@@ -47,4 +49,4 @@ def compress_old_directories():
 
 if __name__ == "__main__":
     organize_screenshots()
-    compress_old_directories()
+    # compress_old_directories()
