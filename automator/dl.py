@@ -3,7 +3,7 @@ import os
 import shutil
 from datetime import datetime, timedelta
 
-downloadsFileRetention = 1
+downloadsFileRetention = 500
 
 home = os.environ.get("HOME")
 if not home:
