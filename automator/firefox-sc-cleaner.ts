@@ -8,6 +8,11 @@ const DIR = join(home, 'Downloads');
 const SCREENSHOT_DIR = join(home, 'Desktop');
 const X_MAX = 100; // 最大ファイル名長
 
+const printLog = (message: string) => {
+  const date = new Date().toISOString();
+  console.log(`${date}: ${message}`);
+};
+
 (async () => {
   const ffScRegex =
     /^Screenshot (\d{4}-\d{2}-\d{2}) at (\d{2})-(\d{2})-(\d{2})(?: (.*))?\.png$/;
@@ -28,7 +33,7 @@ const X_MAX = 100; // 最大ファイル名長
         const fullPath = join(DIR, currentFile);
         const newPath = join(DIR, newFileName);
         await rename(fullPath, newPath);
-        console.log(`Renamed: ${file} -> ${newFileName}`);
+        printLog(`Renamed: ${file} -> ${newFileName}`);
         currentFile = newFileName;
       }
       const univmatch = univScRegex.exec(currentFile);
@@ -37,10 +42,10 @@ const X_MAX = 100; // 最大ファイル名長
         const currentPath = join(DIR, currentFile);
         const scDirPath = join(SCREENSHOT_DIR, currentFile);
         await rename(currentPath, scDirPath);
-        console.log(`Moved: ${currentPath} -> ${scDirPath}`);
+        printLog(`Moved: ${currentPath} -> ${scDirPath}`);
       }
     }
   } catch (error) {
-    console.error('Error:', error);
+    console.log('Error:', error);
   }
 })();
