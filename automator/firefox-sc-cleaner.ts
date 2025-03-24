@@ -6,7 +6,7 @@ import { join } from 'node:path';
 const home = process.env.HOME ?? '';
 const DIR = join(home, 'Downloads');
 const SCREENSHOT_DIR = join(home, 'Desktop');
-const X_MAX = 100; // 最大ファイル名長
+const X_MAX = 100;
 
 const printLog = (message: string) => {
   const date = new Date().toISOString();
