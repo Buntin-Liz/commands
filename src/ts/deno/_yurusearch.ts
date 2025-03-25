@@ -5,7 +5,7 @@ const args = parseArgs(Deno.args);
 
 //検索除外ディレクトリ名
 const exclude = [
-  'node_modules',
+  // 'node_modules',
   '.git',
   '.vscode',
   'testssl',

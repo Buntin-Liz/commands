@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { parseArgs } from 'util';
-import path from 'path';
 import fs from 'node:fs';
-import { file, TOML } from 'bun';
+import path from 'node:path';
+import { parseArgs } from 'node:util';
+import { TOML, file } from 'bun';
 const args = parseArgs({
   args: Bun.argv,
   options: {},
@@ -52,12 +52,16 @@ const getOldMarkdownFiles = (dirPath: string, maxFiles: number): string[] => {
     const todayDiaryPath = path.join(diaryDirName, `${today_string}.md`);
     const archiveDiaryPath = path.join(diaryDirName, archiveDirName, '.');
     const diaryFormattedInitializationMessage = `# ${today_string}\n\n## Tickets\n\n## Notes\n\n## Plans\n\n## Memo\n\n`;
-    const writerResult = await Bun.write(Bun.file(todayDiaryPath), diaryFormattedInitializationMessage);
+    const writerResult = await Bun.write(
+      Bun.file(todayDiaryPath),
+      diaryFormattedInitializationMessage,
+    );
     console.log('Diary file created:', todayDiaryPath, writerResult);
     if (autoClean) {
       const oldFiles = getOldMarkdownFiles(diaryDirName, markdownFilesMaximum);
       if (oldFiles.length > 0) {
-        const moveResult = await $`mv ${oldFiles.join(' ')} ${archiveDiaryPath}`;
+        const moveResult =
+          await $`mv ${oldFiles.join(' ')} ${archiveDiaryPath}`;
         if (moveResult.exitCode !== 0) {
           console.error('Failed to move old diary files.');
           return;

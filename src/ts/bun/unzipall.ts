@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
-import { $ } from 'bun';
-import { parseArgs } from 'util';
 import fs from 'node:fs';
+import { parseArgs } from 'node:util';
+import { $ } from 'bun';
 const _args = parseArgs({
   args: Bun.argv,
   options: {},
