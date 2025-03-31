@@ -3,17 +3,13 @@ import re
 import datetime
 import shutil
 
-# 環境変数から取得
 HOME = os.getenv("HOME", "")
 DOWNLOADS_DIR = os.path.join(HOME, "Downloads")
 DESKTOP_DIR = os.path.join(HOME, "Desktop")
 
-# 最大ファイル名長
 MAX_FILENAME_LENGTH = 100
-# ファイル名に含めたくない特殊文字
 BASH_RESERVED_CHARS = "',|~`;^$<>*?#!=:"
 
-# 正規表現パターン
 FF_SC_REGEX = re.compile(r"^Screenshot (\d{4}-\d{2}-\d{2}) at (\d{2})-(\d{2})-(\d{2})(?: (.*))?\.png$")
 UNIV_SC_REGEX = re.compile(r"^スクリーンショット (\d{4}-\d{2}-\d{2}) (\d{2}).(\d{2}).(\d{2})(.*)\.png$")
 
