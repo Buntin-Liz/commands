@@ -8,7 +8,7 @@ IMAGES_DIR_FORMAT = "%Y-%m-%d"
 
 DESKTOP_DIR = Path.home() / "Desktop"
 DOWNLOADS_DIR = Path.home() / "Downloads"
-ARCHIVE_DIR = DESKTOP_DIR / "archives"
+ARCHIVE_DIR = Path.home() / ".emma" / "archives"
 
 
 def organize_screenshots():

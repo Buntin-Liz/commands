@@ -9,7 +9,7 @@ home = os.environ.get("HOME")
 if not home:
     raise EnvironmentError("HOME not found in environment variables")
 downloads = os.path.join(home, "Downloads")
-dl_dir = os.path.join(home, "Desktop", "dl")
+dl_dir = os.path.join(home, ".emma", "dl")
 
 
 def cleanup_downloads(all_clean):
