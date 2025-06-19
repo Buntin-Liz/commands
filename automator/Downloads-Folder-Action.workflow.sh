@@ -1,18 +1,22 @@
 #!/bin/bash
 
-LOG_FILE="/tmp/Downloads-Folder-Action.log"
+# Downloads Folder Action - SSH keys, screenshots, and file cleanup
+LOG_FILE="/tmp/downloads-folder-action.log"
 PYTHON="/Users/takumi.aoki/.pyenv/shims/python"
 
-if [ ! -f $LOG_FILE ]; then
-  touch $LOG_FILE
+if [ ! -f "$LOG_FILE" ]; then
+  touch "$LOG_FILE"
 fi
 
-## move keys(*.pem) files into ssh key folder (~/.ssh/keys)
-. /Users/takumi.aoki/commands/automator/ssh-key-auto.sh
+echo "$(date): Starting Downloads Folder Action" >> "$LOG_FILE"
 
-## Own Scripts allowed only python3.12 ( because of avast virus scanner )
+# Move SSH keys to secure location
+. "$HOME/commands/automator/ssh-key-handler.sh"
 
-# firefox-sc-cleaner. moving firefox screenshot into ~/Downloads/screenshots.
-"$PYTHON" /Users/takumi.aoki/commands/automator/screenshot_cleaner_ff.py >>$LOG_FILE 2>&1
+# Process Firefox screenshots and move to Desktop
+"$PYTHON" "$HOME/commands/automator/screenshot-cleaner-firefox.py" >> "$LOG_FILE" 2>&1
 
-"$PYTHON" /Users/takumi.aoki/commands/automator/dl.py >>$LOG_FILE 2>&1
+# Clean up old downloads
+"$PYTHON" "$HOME/commands/automator/downloads-cleaner.py" >> "$LOG_FILE" 2>&1
+
+echo "$(date): Downloads Folder Action completed" >> "$LOG_FILE"
