@@ -11,6 +11,7 @@ const { values } = parseArgs({
     config: { type: 'boolean', short: 'c' },
     no: { type: 'boolean', short: 'n' },
     help: { type: 'boolean', short: 'h' },
+    info: { type: 'boolean', short: 'i' },
   },
   strict: true,
   allowPositionals: true,
@@ -103,12 +104,44 @@ const checkGithubLoginEntries = async (): Promise<GithubLoginEntry[]> => {
   return githubLoginEntries;
 };
 
+const showCurrentUser = async () => {
+  console.log('現在のユーザー情報を確認します...');
+  const githubLoginEntries = await checkGithubLoginEntries();
+  const configContentLines = await getCurrentSSHConfigContent();
+  
+  const githubIdentityFileName = configContentLines.find(
+    (line) => line.includes('IdentityFile') && line.includes('github'),
+  );
+  
+  if (githubIdentityFileName === undefined) {
+    console.error('GitHub用のSSH鍵が設定されていません。');
+    return;
+  }
+  
+  const githubIdentityFilePath = githubIdentityFileName.trim().split(' ')[1];
+  const githubIdentityFileNameWithoutPath = path.basename(githubIdentityFilePath);
+  const currentEntry = githubLoginEntries.find((entry) =>
+    entry.secKeyPath.includes(githubIdentityFileNameWithoutPath),
+  );
+  
+  if (currentEntry === undefined) {
+    console.error('設定されているGitHub用のSSH鍵が見つかりません。');
+    return;
+  }
+  
+  console.log(`現在のGitHubユーザー: ${currentEntry.configname}`);
+  console.log(`ユーザー名: ${currentEntry.username}`);
+  console.log(`SSH鍵: ${currentEntry.secKeyPath}`);
+  console.log(`Git設定: ${currentEntry.gitconfigPath}`);
+};
+
 const showHelp = () => {
-  console.log('Usage: chgh [-c] [-n] [-h] or chgh [-cn]');
+  console.log('Usage: chgh [-c] [-n] [-h] [-i] or chgh [-cn]');
   console.log('Options:');
   console.log('  -c: format ssh config file');
   console.log('  -n: No prompt & slide ssh settings');
   console.log('  -h: Show help');
+  console.log('  -i: Show current user information');
 };
 
 const migrateToNewConfig = async (newGithubLoginEntry: GithubLoginEntry) => {
@@ -132,6 +165,10 @@ const migrateToNewConfig = async (newGithubLoginEntry: GithubLoginEntry) => {
 (async () => {
   if (values.help) {
     showHelp();
+    process.exit(0);
+  }
+  if (values.info) {
+    await showCurrentUser();
     process.exit(0);
   }
   console.log('chgh設定情報を確認します...');
