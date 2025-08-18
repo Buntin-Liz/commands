@@ -26,11 +26,9 @@ def rename_firefox_screenshot(file: str) -> str:
         return file
 
     date, hh, mm, ss, title = match.groups()
-    title = title or "no-title"
-    sanitized_title = sanitize_filename(title)
 
-    base_name = f"スクリーンショット {date} {hh}.{mm}.{ss}_firefox_{sanitized_title}"
-    new_name = (base_name[:MAX_FILENAME_LENGTH - 4] if len(base_name) + 4 > MAX_FILENAME_LENGTH else base_name) + ".png"
+    base_name = f"スクリーンショット {date} {hh}.{mm}.{ss}"
+    new_name = base_name + ".png"
 
     old_path = os.path.join(DOWNLOADS_DIR, file)
     new_path = os.path.join(DOWNLOADS_DIR, new_name)
