@@ -11,7 +11,7 @@ if [ "$(git rev-parse --show-toplevel 2> /dev/null)" = "$(pwd)" ]; then
   echo "$(pwd) is Repo root."
 else
   echo "$(pwd) is not Repo root."
-  exit(1)
+  exit 1
 fi
 
 # Bun install

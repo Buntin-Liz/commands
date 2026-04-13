@@ -1,1 +1,0 @@
-egrep -v "#|^$" /etc/hosts
