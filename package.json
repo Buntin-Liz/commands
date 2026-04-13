@@ -8,7 +8,6 @@
   },
   "scripts": {
     "deploy": "echo 'deploy is duplicated. use sync.'",
-    "on:deno": "cat .vscode/settings-deno.json > .vscode/settings.json",
     "sync": "./sync.sh",
     "format": "biome format --write .",
     "lint": "biome lint .",

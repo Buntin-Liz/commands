@@ -109,18 +109,11 @@ else
   echo "The line already exists in '$RC_FILE'"
 fi
 
-# 4. bun, deno check
-echo "4. Bun & Deno Checking"
-
-if ! command -v deno >/dev/null 2>&1; then
-  echo "Error: 'deno' is not found in PATH. Please install Deno before continuing."
-  exit 1
-else
-  echo "'deno' is found in PATH. Continuing..."
-fi
+# 4. bun check
+echo "4. Bun Checking"
 
 if ! command -v bun >/dev/null 2>&1; then
-  echo "Error: 'bun' is not found in PATH. Please install Deno before continuing."
+  echo "Error: 'bun' is not found in PATH. Please install Bun before continuing."
   exit 1
 else
   echo "'bun' is found in PATH. Continuing..."
