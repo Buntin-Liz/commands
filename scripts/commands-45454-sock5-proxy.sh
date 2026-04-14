@@ -3,7 +3,9 @@ set -u
 
 PIDFILE="$HOME/.local/run/ssh-socks-bc2.pid"
 LOGDIR="$HOME/.local/run"
+PROXY_PORT=45454
 SSH_BIN="/usr/bin/ssh"
+SSH_TARGET="bc2"
 
 mkdir -p "$LOGDIR"
 
@@ -30,8 +32,8 @@ echo "$$" >"$PIDFILE"
 
 exec "$SSH_BIN" \
 	-N \
-	-D 127.0.0.1:45454 \
+	-D "127.0.0.1:$PROXY_PORT" \
 	-o ExitOnForwardFailure=yes \
 	-o ServerAliveInterval=30 \
 	-o ServerAliveCountMax=3 \
-	bc2
+	"$SSH_TARGET"

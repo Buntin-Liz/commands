@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>local.commands.ssh.socks.bc2</string>
+
+    <key>ProgramArguments</key>
+    <array>
+      <string>/Users/takumi.aoki/commands/scripts/commands-45454-sock5-proxy.sh</string>
+    </array>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>ThrottleInterval</key>
+    <integer>15</integer>
+
+    <key>Umask</key>
+    <integer>63</integer>
+  </dict>
+</plist>
