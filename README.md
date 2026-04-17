@@ -5,3 +5,7 @@
 一つにするまでもないなというスクリプトに関して、再利用性が高ければここに投下していきます。
 
 `bun run deploy`
+
+`launchctl list`
+
+`local.commands.ssh.socks.bc2`

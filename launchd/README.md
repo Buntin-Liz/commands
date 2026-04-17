@@ -1,26 +1,22 @@
-# launchd SOCKS Proxy 運用手順
+# launchd 定期実行ジョブ管理
 
-このドキュメントは、SOCKS プロキシ用 `launchd` ジョブを一度きれいに削除し、
-このリポジトリの定義を使って再登録するための手順をまとめたものです。
+このディレクトリは `~/Library/LaunchAgents` に配置する `.plist` ファイルを管理します。
 
-## 正式なジョブ定義
+## 管理ファイル一覧
 
-- ラベル: `local.commands.ssh.socks.bc2`
-- 元の plist: `/Users/takumi.aoki/commands/launchd/agents/local.commands.ssh.socks.bc2.plist`
-- 起動対象スクリプト: `/Users/takumi.aoki/commands/scripts/commands-45454-sock5-proxy.sh`
+| plist ファイル | Label | 用途 |
+|---|---|---|
+| `local.commands.ssh.socks.bc2.plist` | `local.commands.ssh.socks.bc2` | SOCKS5 プロキシ (bc2, port 45454) |
 
-## 削除対象になりうる旧ジョブと関連ファイル
+---
 
-- 旧ラベル: `local.ssh.socks.bc2`
-- 新ラベル: `local.commands.ssh.socks.bc2`
-- 旧 plist の想定配置: `~/Library/LaunchAgents/local.ssh.socks.bc2.plist`
-- 新 plist の想定配置: `~/Library/LaunchAgents/local.commands.ssh.socks.bc2.plist`
-- stale PID ファイルの想定配置: `~/.local/run/commands-45454-sock5-proxy.pid`
-- 旧ログの想定配置: `/tmp/local.ssh.socks.bc2.out.log`, `/tmp/local.ssh.socks.bc2.err.log`
+## local.commands.ssh.socks.bc2
 
-## 完全削除してから再登録する手順
+- **ラベル**: `local.commands.ssh.socks.bc2`
+- **plist**: `~/commands/launchd/local.commands.ssh.socks.bc2.plist`
+- **起動スクリプト**: `~/commands/scripts/commands-45454-sock5-proxy.sh`
 
-エージェントを所有している macOS ユーザーで、以下をそのまま実行してください。
+### 登録手順（クリーン再登録）
 
 ```sh
 set -eu
@@ -32,7 +28,7 @@ NEW_LABEL="local.commands.ssh.socks.bc2"
 OLD_LABEL="local.ssh.socks.bc2"
 NEW_PLIST_NAME="local.commands.ssh.socks.bc2.plist"
 OLD_PLIST_NAME="local.ssh.socks.bc2.plist"
-SOURCE_PLIST="$REPO_DIR/launchd/agents/$NEW_PLIST_NAME"
+SOURCE_PLIST="$REPO_DIR/launchd/$NEW_PLIST_NAME"
 TARGET_PLIST="$AGENT_DIR/$NEW_PLIST_NAME"
 OLD_TARGET_PLIST="$AGENT_DIR/$OLD_PLIST_NAME"
 PID_FILE="$HOME/.local/run/commands-45454-sock5-proxy.pid"
@@ -46,7 +42,6 @@ launchctl bootout "$DOMAIN" "$OLD_TARGET_PLIST" 2>/dev/null || true
 
 rm -f "$TARGET_PLIST" "$OLD_TARGET_PLIST"
 rm -f "$PID_FILE"
-rm -f /tmp/local.ssh.socks.bc2.out.log /tmp/local.ssh.socks.bc2.err.log
 
 cp "$SOURCE_PLIST" "$TARGET_PLIST"
 chmod 644 "$TARGET_PLIST"
@@ -58,29 +53,20 @@ launchctl kickstart -k "$DOMAIN/$NEW_LABEL"
 launchctl print "$DOMAIN/$NEW_LABEL"
 ```
 
-## 確認方法
-
-ジョブが正しくロードされているか確認する:
+### 確認
 
 ```sh
+# ジョブのロード確認
 launchctl print "gui/$(id -u)/local.commands.ssh.socks.bc2"
-```
 
-ローカルの SOCKS リスナーが立っているか確認する:
-
-```sh
+# SOCKS リスナー確認
 lsof -nP -iTCP:45454 -sTCP:LISTEN
+
+# SSH プロセス確認
+ps -p "$(cat "$HOME/.local/run/ssh-socks-bc2.pid")" -o pid=,command=
 ```
 
-追跡している `ssh` プロセスを確認する:
-
-```sh
-ps -p "$(cat "$HOME/.local/run/commands-45454-sock5-proxy.pid")" -o pid=,command=
-```
-
-## 削除だけ行いたい場合
-
-再登録せず、アンロードと関連ファイルの削除だけを行う場合は以下を実行してください。
+### 削除のみ
 
 ```sh
 set -eu
@@ -96,7 +82,5 @@ launchctl bootout "$DOMAIN" "$AGENT_DIR/local.ssh.socks.bc2.plist" 2>/dev/null |
 rm -f \
   "$AGENT_DIR/local.commands.ssh.socks.bc2.plist" \
   "$AGENT_DIR/local.ssh.socks.bc2.plist" \
-  "$HOME/.local/run/commands-45454-sock5-proxy.pid" \
-  /tmp/local.ssh.socks.bc2.out.log \
-  /tmp/local.ssh.socks.bc2.err.log
+  "$HOME/.local/run/ssh-socks-bc2.pid"
 ```

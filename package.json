@@ -7,8 +7,7 @@
     "bun-types": "^1.3.5"
   },
   "scripts": {
-    "deploy": "echo 'deploy is duplicated. use sync.'",
-    "sync": "./sync.sh",
+    "deploy": "./deploy.sh",
     "format": "biome format --write .",
     "lint": "biome lint .",
     "lint:fix": "biome lint --write --unsafe .",

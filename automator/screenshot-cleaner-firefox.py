@@ -15,54 +15,54 @@ UNIV_SC_REGEX = re.compile(r"^スクリーンショット (\d{4}-\d{2}-\d{2}) (\
 
 
 def sanitize_filename(filename: str) -> str:
-    """Bashで問題を起こす可能性のある特殊文字を削除"""
-    return filename.translate(str.maketrans("", "", BASH_RESERVED_CHARS))
+  """Bashで問題を起こす可能性のある特殊文字を削除"""
+  return filename.translate(str.maketrans("", "", BASH_RESERVED_CHARS))
 
 
 def rename_firefox_screenshot(file: str) -> str:
-    """Firefoxのスクリーンショットをリネームする"""
-    match = FF_SC_REGEX.match(file)
-    if not match:
-        return file
+  """Firefoxのスクリーンショットをリネームする"""
+  match = FF_SC_REGEX.match(file)
+  if not match:
+    return file
 
-    date, hh, mm, ss, title = match.groups()
+  date, hh, mm, ss, title = match.groups()
 
-    base_name = f"スクリーンショット {date} {hh}.{mm}.{ss}"
-    new_name = base_name + ".png"
+  base_name = f"スクリーンショット {date} {hh}.{mm}.{ss}"
+  new_name = base_name + ".png"
 
-    old_path = os.path.join(DOWNLOADS_DIR, file)
-    new_path = os.path.join(DOWNLOADS_DIR, new_name)
-    os.rename(old_path, new_path)
-    print_log(f"Renamed: {file} -> {new_name}")
+  old_path = os.path.join(DOWNLOADS_DIR, file)
+  new_path = os.path.join(DOWNLOADS_DIR, new_name)
+  os.rename(old_path, new_path)
+  print_log(f"Renamed: {file} -> {new_name}")
 
-    return new_name
+  return new_name
 
 
 def move_screenshot(file: str):
-    """スクリーンショットをデスクトップへ移動"""
-    match = UNIV_SC_REGEX.match(file)
-    if match:
-        old_path = os.path.join(DOWNLOADS_DIR, file)
-        new_path = os.path.join(DESKTOP_DIR, file)
-        shutil.move(old_path, new_path)
-        print_log(f"Moved: {old_path} -> {new_path}")
+  """スクリーンショットをデスクトップへ移動"""
+  match = UNIV_SC_REGEX.match(file)
+  if match:
+    old_path = os.path.join(DOWNLOADS_DIR, file)
+    new_path = os.path.join(DESKTOP_DIR, file)
+    shutil.move(old_path, new_path)
+    print_log(f"Moved: {old_path} -> {new_path}")
 
 
 def print_log(message: str):
-    """ログ出力"""
-    timestamp = datetime.datetime.now().isoformat()
-    print(f"{timestamp}: {message}")
+  """ログ出力"""
+  timestamp = datetime.datetime.now().isoformat()
+  print(f"{timestamp}: {message}")
 
 
 def main():
-    try:
-        files = os.listdir(DOWNLOADS_DIR)
-        for file in files:
-            renamed_file = rename_firefox_screenshot(file)
-            move_screenshot(renamed_file)
-    except Exception as e:
-        print_log(f"Error: {e}")
+  try:
+    files = os.listdir(DOWNLOADS_DIR)
+    for file in files:
+      renamed_file = rename_firefox_screenshot(file)
+      move_screenshot(renamed_file)
+  except Exception as e:
+    print_log(f"Error: {e}")
 
 
 if __name__ == "__main__":
-    main()
+  main()
